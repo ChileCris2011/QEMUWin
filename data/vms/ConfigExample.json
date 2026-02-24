@@ -1,0 +1,13 @@
+{
+    "name": "TestVM",
+    "memory_mb": 512,
+    "cpu_cores": 1,
+    "disk_path": "path\\to\\your\\disk.qcow2",
+    "iso_path": "path\\to\\your\\image.iso",
+    "machine_type": "pc",
+    "enable_whpx": false,
+    "custom_flags": [
+        "-boot",
+        "order=dc"
+    ]
+}

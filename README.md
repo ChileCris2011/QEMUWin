@@ -19,18 +19,18 @@ This first release is still not meant to general use, but here are the steps to 
 
 1. Create a JSON file in `data/vms`.
    This file must contain at least:  
-    - VM name
-    - RAM Memory (in MB)
-    - CPU cores
-    - Virtual Disk Path   
+    - VM name *as `name` str*
+    - RAM Memory (in MB) *as `memory_mb` int*
+    - CPU cores *as `cpu_cores` int*
+    - Virtual Disk Path *as `disk_path` str*
 
    Optionally, it can contain:
-    - Machine type (defaults to 'pc')
-    - Enable WHPX (defaults to False)
-    - ISO Path
-    - QMP port (defaults to localhost:4444)
-    - VNC port (defaults to localhost:5900)
-    - Custom QEMU flags
+    - Machine type (defaults to 'pc') *as `machine_type` str*
+    - Enable WHPX (defaults to False) *as `enable_whpx` bool*
+    - ISO Path *as `iso_path` str*
+    - QMP port (defaults to localhost:4444) *as `qmp_port` int*
+    - VNC port (defaults to localhost:5900) *as `vnc_port` int*
+    - Custom QEMU flags *as `custom_flag` list*
 
    Here's an example of a config file:
    ```json
@@ -44,10 +44,14 @@ This first release is still not meant to general use, but here are the steps to 
         "enable_whpx": false,
         "custom_flags": [
             "-boot",
-            "order=dc"
+            "order=dc",
+            "-usb",
+            "-device",
+            "usb_tablet"
         ]
     }
     ```
+    Note that `custom_flags` is a list, not a string. Instead of an space, you must add a new item to the list.
 2. Execute `main.py`   
 
    As long as the configuration file(s) are in `data/vms`, the program will detect the configuration and ask the user which one to use. Enter the number of the VM and that's it!
