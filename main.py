@@ -1,20 +1,15 @@
-from core.vm_manager import VMManager
+import sys
+from PySide6.QtWidgets import QApplication
+from backend.vm_manager import VMManager
+from gui.main_window import MainWindow
 
-manager = VMManager(f"C:\\msys64\\ucrt64\\bin\\qemu-system-x86_64.exe")
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
 
-vms = manager.list_vms()
+    manager = VMManager()
+    window = MainWindow(manager)
+    window.show()
 
-print("VMs disponibles: ", vms)
+    sys.exit(app.exec())
 
-sourcevm = input(f"Select the VM to start (0-{len(vms)-1})")
-
-vm = manager.get_vm(vms[int(sourcevm)])
-
-manager.event_bus.subscribe("vm_output", print)
-manager.event_bus.subscribe("vm_started", lambda: print("VM started"))
-manager.event_bus.subscribe("vm_stopped", lambda: print("VM stopped"))
-
-try:
-    vm.start()
-except KeyboardInterrupt:
-    vm.shutdown()
+#TODO: Buttons (except ACPI), auto-port (now just defaults to 4444 and can cause conflicts with multiple vms), manage errors visually

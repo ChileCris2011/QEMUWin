@@ -9,49 +9,9 @@ QEMUWin *will be* a new, simple-to-use Python-based interface for Windows that p
    
 ---
    
-### Initial release:
-This first release only includes the foundation of the project: A simple Python program to run and monitor a QEMU VMs.   
+### Beta GUI v1:
+
+I'm happy to see that all my effort is giving results. This is the first release of the real GUI and, even with all it's bugs, I'm proud to see results off of my work.   
    
-You still need to manually configure the virtual machine via a JSON file, and it only supports the x86_64 architecture.   
-   
-#### How to use:
-This first release is still not meant to general use, but here are the steps to configure a QEMU VM:   
-
-1. Create a JSON file in `data/vms`.
-   This file must contain at least:  
-    - VM name *as `name` str*
-    - RAM Memory (in MB) *as `memory_mb` int*
-    - CPU cores *as `cpu_cores` int*
-    - Virtual Disk Path *as `disk_path` str*
-
-   Optionally, it can contain:
-    - Machine type (defaults to 'pc') *as `machine_type` str*
-    - Enable WHPX (defaults to False) *as `enable_whpx` bool*
-    - ISO Path *as `iso_path` str*
-    - QMP port (defaults to localhost:4444) *as `qmp_port` int*
-    - VNC port (defaults to localhost:5900) *as `vnc_port` int*
-    - Custom QEMU flags *as `custom_flag` list*
-
-   Here's an example of a config file:
-   ```json
-   {
-        "name": "TestVM",
-        "memory_mb": 512,
-        "cpu_cores": 1,
-        "disk_path": ".\\virt\\disk.qcow2",
-        "iso_path": ".\\virt\\install.iso",
-        "machine_type": "pc",
-        "enable_whpx": false,
-        "custom_flags": [
-            "-boot",
-            "order=dc",
-            "-usb",
-            "-device",
-            "usb_tablet"
-        ]
-    }
-    ```
-    Note that `custom_flags` is a list, not a string. Instead of an space, you must add a new item to the list.
-2. Execute `main.py`   
-
-   As long as the configuration file(s) are in `data/vms`, the program will detect the configuration and ask the user which one to use. Enter the number of the VM and that's it!
+Just like the previous release, this version isn't intended for general use yet. It contains too many bugs (most of which I probably don't even know about)!  
+Since I don't think this version(s) will be available for very long, I won't write the user guide until I have the first stable version.
