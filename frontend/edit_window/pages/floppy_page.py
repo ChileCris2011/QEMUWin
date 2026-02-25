@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
 )
 
 
-class CdromPage(QWidget):
+class FloppyPage(QWidget):
     def __init__(self, config):
         super().__init__()
 
@@ -14,7 +14,7 @@ class CdromPage(QWidget):
         self.path = QLineEdit(config.get("path"))
 
         browse = QPushButton("Browse")
-        browse.clicked.connect(self.select_iso)
+        browse.clicked.connect(self.select_image)
 
         eject = QPushButton("Eject")
         eject.clicked.connect(self.eject_media)
@@ -24,16 +24,11 @@ class CdromPage(QWidget):
         path_layout.addWidget(browse)
         path_layout.addWidget(eject)
 
-        self.bus = QComboBox()
-        self.bus.addItems(["sata", "ide", "scsi"])
-        self.bus.setCurrentText(config.get("bus"))
-
-        layout.addRow("ISO Path:", path_layout)
-        layout.addRow("Bus:", self.bus)
+        layout.addRow("Media Path:", path_layout)
 
         self.setLayout(layout)
 
-    def select_iso(self):
+    def select_image(self):
         path, _ = QFileDialog.getOpenFileName(self, "Select ISO", filter="ISO (*.iso)")
         if path:
             self.path.setText(path)
@@ -43,6 +38,5 @@ class CdromPage(QWidget):
 
     def get_data(self):
         return {
-            "path": self.path.text(),
-            "bus": self.bus.currentText()
+            "path": self.path.text()
         }

@@ -8,8 +8,8 @@ class AudioPage(QWidget):
         layout = QFormLayout()
 
         self.model = QComboBox()
-        self.model.addItems(["None", "AC97", "ICH9", "HDA"])
-        self.model.setCurrentText(config.get("model", "None"))
+        self.model.addItems(["None", "ac97", "intel-hda", "ich9-intel-hda", "hda-duplex", "sb16", "es1370", "usb-audio", "virtio-sound"])
+        self.model.setCurrentText(config.get("model"))
 
         layout.addRow("Audio Device:", self.model)
 

@@ -12,4 +12,4 @@ if __name__ == "__main__":
 
     sys.exit(app.exec())
 
-#TODO: Buttons (except ACPI), auto-port (now just defaults to 4444 and can cause conflicts with multiple vms), manage errors visually
+#TODO: Manage errors visually, add kill button

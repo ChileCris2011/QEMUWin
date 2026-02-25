@@ -69,16 +69,18 @@ class VMProcess:
 
         #print(cmd)
 
+        empty_text = ["Empty", "", " ", "empty"]
+
         if self.config.get("media"):
             for medias in self.config.get("media"):
                 cmd += ["-drive"]
                 if medias.get("type") == "CD-ROM":
-                    if medias.get("path") != "Empty":
+                    if medias.get("path") not in empty_text:
                         cmd += [f"media=cdrom,file={medias.get("path")},if=ide"]
                     else:
                         cmd += ["media=cdrom,if=ide"]
                 elif medias.get("type") == "Floppy":
-                    if medias.get("path") != "Empty":
+                    if medias.get("path") not in empty_text:
                         cmd += [f"file=\"{medias.get("path")}\",if=floppy"]
                     else:
                         cmd += ["if=floppy"]

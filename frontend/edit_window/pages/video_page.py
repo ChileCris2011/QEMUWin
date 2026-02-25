@@ -8,8 +8,8 @@ class VideoPage(QWidget):
         layout = QFormLayout()
 
         self.model = QComboBox()
-        self.model.addItems(["virtio", "qxl", "std", "vmware"])
-        self.model.setCurrentText(config.get("model", "virtio"))
+        self.model.addItems(["virtio", "qxl", "std", "vmware", "vga", "cirrus"])
+        self.model.setCurrentText(config.get("model"))
 
         layout.addRow("Video Model:", self.model)
 

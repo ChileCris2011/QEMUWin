@@ -12,6 +12,7 @@ from frontend.edit_window.pages.cpu_page import CpuPage
 from frontend.edit_window.pages.memory_page import MemoryPage
 from frontend.edit_window.pages.disk_page import DiskPage
 from frontend.edit_window.pages.cdrom_page import CdromPage
+from frontend.edit_window.pages.floppy_page import FloppyPage
 from frontend.edit_window.pages.network_page import NetworkPage
 from frontend.edit_window.pages.audio_page import AudioPage
 from frontend.edit_window.pages.video_page import VideoPage
@@ -86,19 +87,29 @@ class EditVMWindow(QMainWindow):
 
         # Storage
         if self.vm_config.get("storage"):
-            for i, disk in enumerate(self.vm_config.get("storage", [])):
-                print(disk)
+            for i, disk in enumerate(self.vm_config.get("storage")):
                 self.add_page(f"Disk {i+1}", DiskPage(disk))
 
         # CDROM
         if self.vm_config.get("media"):
-            for i, media in enumerate(self.vm_config.get("media", [])):
+            num = 0
+            for i, media in enumerate(self.vm_config.get("media")):
                 if media.get("type") == "CD-ROM":
-                    self.add_page(f"CD-ROM {i+1}", CdromPage(media))
+                    num += 1
+                    self.add_page(f"CD-ROM {num}", CdromPage(media))
+        
+        # Floppy
+        if self.vm_config.get("media"):
+            num = 0
+            for i, media in enumerate(self.vm_config.get("media")):
+                if media.get("type") == "Floppy":
+                    num += 1
+                    self.add_page(f"Floppy {num}", FloppyPage(media))
 
         # Network
         if self.vm_config.get("network"):
-            for i, net in enumerate(self.vm_config.get("network", [])):
+            for i, net in enumerate(self.vm_config.get("network")):
+                print("IN:", net)
                 self.add_page(f"NIC {i+1}", NetworkPage(net))
 
         # Audio
@@ -134,33 +145,22 @@ class EditVMWindow(QMainWindow):
     # --------------------------------------------------
 
     def add_device(self):
-        dialog = AddDeviceDialog(self)
+        dialog = AddDeviceDialog()
         if dialog.exec():
-            device = dialog.get_selected_device()
+            device = dialog.get_data()
 
-            if device == "Disk":
-                page = DiskPage({})
-                self.add_page("New Disk", page)
-
-            elif device == "CD-ROM":
-                page = CdromPage({})
-                self.add_page("New CD-ROM", page)
-
-            elif device == "Network":
-                page = NetworkPage({})
-                self.add_page("New NIC", page)
-
-            elif device == "Sound":
-                page = AudioPage({})
-                self.add_page("Sound", page)
-
-            elif device == "Video":
-                page = VideoPage({})
-                self.add_page("Video", page)
-
-            elif device == "USB Controller":
-                page = UsbPage({})
-                self.add_page("USB Controller", page)
+            match int(device.get("index")):
+                case 0:
+                    page = DiskPage(device.get("info"))
+                    self.add_page("New Disk", page)
+                case 1:
+                    info = device.get("info")
+                    if info.get("type") == "CD-ROM":
+                        page = CdromPage(info)
+                        self.add_page("New CD-ROM", page)
+                    else:
+                        page = FloppyPage(info)
+                        self.add_page("New Floppy", page)
 
     # --------------------------------------------------
     # Collect + Apply
@@ -224,6 +224,7 @@ class EditVMWindow(QMainWindow):
             "Changes have been applied succesfully"
         )
 
-        # TODO: Apply changes to JSON file
-
-## TODO: Test (Yeah, I haven't tested this yet)
+        from backend.vm_manager import VMManager
+        manager = VMManager()
+        manager.edit_vm() # <--- TODO: End this please
+        self.close()

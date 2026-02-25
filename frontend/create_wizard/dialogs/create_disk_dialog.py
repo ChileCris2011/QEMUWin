@@ -30,17 +30,12 @@ class CreateDiskDialog(QDialog):
         self.size.setRange(1, 2048)
         self.size.setValue(20)
 
-        # Format
-        self.format = QComboBox()
-        self.format.addItems(["qcow2", "raw"])
-
         # Bus
         self.bus = QComboBox()
         self.bus.addItems(["virtio", "sata", "ide", "scsi"])
 
         form.addRow("Path:", path_layout)
         form.addRow("Size (GB):", self.size)
-        form.addRow("Format:", self.format)
         form.addRow("Bus:", self.bus)
 
         layout.addLayout(form)
@@ -70,6 +65,5 @@ class CreateDiskDialog(QDialog):
             "mode": "create",
             "path": self.path_edit.text(),
             "size": self.size.value(),
-            "format": self.format.currentText(),
             "bus": self.bus.currentText()
         }

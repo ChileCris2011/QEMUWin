@@ -7,10 +7,10 @@ class CpuPage(QWidget):
 
         layout = QFormLayout()
 
-        cpu = vm_config.get("cpu", {})
+        cpu = vm_config["cpu"]
 
         self.model = QComboBox()
-        self.model.addItems(["host", "qemu64", "max"])
+        self.model.addItems(["athlon", "core2duo", "coreduo", "kvm32", "kvm64", "n270", "pentium", "pentium2", "pentium3", "phenom", "qemu32", "qemu64", "base", "host", "max" , "486", "Broadwell", "Cascadelake-Server", "ClearwaterForest", "Conroe", "Cooperlake", "Denverton", "Dhyana", "EPYC", "EPIC-Genoa", "EPIC-IBPB", "EPYC-Milan", "EPYC-Rome", "EPIC-Turin", "GraniteRapids", "Haswell", "Icelake-Server", "IvyBridge", "KnightsMill", "Nehalem", "Opteron_G1", "Opteron_G2", "Opteron_G3", "Opteron_G4", "Opteron_G5", "Penryn", "SandyBridge", "SapphireRapids", "SierraForest", "Skylake-Client", "Skylake-Server", "Snowridge", "Westmere", "YongFeng"])
 
         self.sockets = QSpinBox()
         self.sockets.setRange(1, 8)
@@ -21,9 +21,9 @@ class CpuPage(QWidget):
         self.threads = QSpinBox()
         self.threads.setRange(1, 8)
 
-        self.model.setCurrentText(cpu.get("model", "host"))
+        self.model.setCurrentText(cpu["model"])
         #self.sockets.setValue(cpu.get("sockets", 1))
-        self.cores.setValue(cpu.get("cores", 2))
+        self.cores.setValue(cpu["cores"])
         #self.threads.setValue(cpu.get("threads", 1))
 
         layout.addRow("Model:", self.model)
