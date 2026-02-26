@@ -55,17 +55,20 @@ class VMListWidget(QListWidget):
 
         menu = QMenu()
 
-        start_action = menu.addAction("Start")
-        stop_action = menu.addAction("Stop")
-        edit_action = menu.addAction("Edit")
-        delete_action = menu.addAction("Delete")
+        start_action = menu.addAction(f"  Start")
+        stop_action = menu.addAction(f"  Stop")
+        kill_action = menu.addAction(f"  Quit")
+        edit_action = menu.addAction(f"  Edit")
+        delete_action = menu.addAction(f"  Delete")
 
         state = self.manager.get_state(name)
 
         if state.value == "running":
             start_action.setDisabled(True)
+            stop_action.setDisabled(False)
         else:
             stop_action.setDisabled(True)
+            start_action.setDisabled(False)
 
         action = menu.exec(self.mapToGlobal(position))
 
@@ -74,6 +77,9 @@ class VMListWidget(QListWidget):
 
         elif action == stop_action:
             self.manager.stop_vm(name)
+        
+        elif action == kill_action:
+            self.manager.kill_vm(name)
 
         elif action == edit_action:
             self.parent().parent()._edit_vm()

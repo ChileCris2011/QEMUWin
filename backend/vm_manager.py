@@ -34,6 +34,11 @@ class VMManager:
 
         if name in self.processes:
             raise RuntimeError("Cannot edit running VM")
+        
+        if (data.get("name") != name):
+            self.config.delete_vm(name)
+            name = data.get("name")
+
 
         self.config.save_vm(name, data)
 
@@ -64,6 +69,10 @@ class VMManager:
         if name in self.processes:
             self.processes[name].stop()
 
+    def kill_vm(self, name):
+        if name in self.processes:
+            self.processes[name].quit()
+
     def _vm_state_changed(self, name, state):
         if self.on_vm_state_changed:
             self.on_vm_state_changed(name, state)
@@ -90,9 +99,9 @@ class VMManager:
             if mode == "create":
                 self._create_disk_file(disk)
                 disk.pop("size", None)
-
-            elif mode == "existing":
-                disk["format"] = self._detect_format(disk["path"])
+                disk.pop("fmat", None)
+                disk["path"] = f"{disk["path"]}\\{disk["name"]}.{disk["fmat"]}"
+                disk.pop("name")
 
             # Delete creation tag
             disk.pop("mode", None)
@@ -105,9 +114,9 @@ class VMManager:
 
     def _create_disk_file(self, disk):
 
-        path = disk["path"]
+        path = f"{disk["path"]}\\{disk["name"]}.{disk["fmat"]}"
         size = disk["size"]
-        fmt = disk["format"]
+        fmt = disk["fmat"]
 
         # Make folder if it doesn't exist
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -122,39 +131,3 @@ class VMManager:
         ]
 
         subprocess.run(cmd, check=True)
-
-
-    def _detect_format(self, path):
-
-        # This will work for now
-        ext = os.path.splitext(path)[1].lower()
-
-        if ext == ".qcow2":
-            return "qcow2"
-        elif ext == ".raw":
-            return "raw"
-        elif ext == ".img":
-            return "raw"
-
-        """
-        Detect format using qemu-img
-
-        Why is not implemented?
-        Well, I just let it here for future reference. By now it's not necesary as I just ask for this three formats
-
-        try:
-            result = subprocess.run(
-                ["qemu-img", "info", path],
-                capture_output=True,
-                text=True
-            )
-
-            for line in result.stdout.splitlines():
-                if "file format" in line:
-                    return line.split(":")[1].strip()
-
-        except Exception:
-            pass
-
-        return "raw"
-        """

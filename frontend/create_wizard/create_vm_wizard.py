@@ -11,6 +11,8 @@ from frontend.create_wizard.pages.page_summary import PageSummary
 
 from backend.vm_manager import VMManager
 
+from gui.styles import APP_STYLE
+
 
 class CreateVMWizard(QWizard):
     def __init__(self, parent=None):
@@ -18,6 +20,8 @@ class CreateVMWizard(QWizard):
 
         self.setWindowTitle("Create New Virtual Machine")
         self.resize(720, 520)
+        self.setStyleSheet(APP_STYLE)
+        self.setWizardStyle(QWizard.WizardStyle.ClassicStyle)
 
         self.vm_config = {}
         self.vm_manager = VMManager()

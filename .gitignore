@@ -1,3 +1,5 @@
 virt/
 vms/
 __pycache__/
+
+app.log

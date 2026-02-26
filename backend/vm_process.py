@@ -3,6 +3,7 @@ import threading
 from backend.vm_state import VMState
 from backend.qmp_client import QMPClient
 
+import logging
 
 class VMProcess:
     def __init__(self, name, config, qmp_port):
@@ -35,10 +36,10 @@ class VMProcess:
         try:
             self.qmp = QMPClient("127.0.0.1", self.qmp_port)
             self.qmp.connect()
-            print("VM Running")
+            logging.info("VM Running")
             self._set_state(VMState.RUNNING)
         except ConnectionRefusedError as e:
-            print(f"Error Connecting to VM's QMP: {e}")
+            logging.error(f"Error Connecting to VM's QMP")
             self._set_state(VMState.ERROR)
 
     def _build_command(self):
@@ -65,7 +66,7 @@ class VMProcess:
 
         if self.config.get("storage"):
             for disk in self.config.get("storage"):
-                cmd += ["-drive", f"media=disk,file={disk.get("path")},format={disk.get("format")},if={disk.get("bus")}"]
+                cmd += ["-drive", f"media=disk,file={disk.get("path")},format={self._detect_format(disk.get("path"))},if={disk.get("bus")}"]
 
         #print(cmd)
 
@@ -102,8 +103,26 @@ class VMProcess:
 
         #print(cmd)
 
-        print(f"Command generated: {" ".join(cmd)}")
+        logging.debug(f"Command generated: {" ".join(cmd)}")
         return cmd
+
+    def _detect_format(self, path):
+
+        try:
+            result = subprocess.run(
+                ["qemu-img", "info", path],
+                capture_output=True,
+                text=True
+            )
+
+            for line in result.stdout.splitlines():
+                if "file format" in line:
+                    return line.split(":")[1].strip()
+
+        except Exception:
+            pass
+
+        return "raw"
 
     def _monitor(self):
         self.process.wait()
@@ -117,4 +136,10 @@ class VMProcess:
             try:
                 self.qmp.shutdown()
             except:
-                pass
+                raise RuntimeError("Failed to send ACPI Shutdown signal to VM")
+    def quit(self):
+        if self.qmp:
+            try:
+                self.qmp.quit()
+            except:
+                raise RuntimeError("Failed to end VM process")

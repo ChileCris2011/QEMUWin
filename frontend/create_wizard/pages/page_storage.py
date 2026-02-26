@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
 )
 
 from frontend.create_wizard.dialogs.create_disk_dialog import CreateDiskDialog
+from frontend.create_wizard.dialogs.select_disk_dialog import SelectDiskDialog
 
 
 class PageStorage(QWizardPage):
@@ -49,21 +50,16 @@ class PageStorage(QWizardPage):
 
     # Select an existing disk file
     def add_existing_disk(self):
-        path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select Existing Disk",
-            filter="Disk Images (*.qcow2 *.raw *.img)"
-        )
+        dialog = SelectDiskDialog()
 
-        if path:
-            disk_data = {
-                "mode": "existing",
-                "path": path,
-                "format": "auto",  # Does it work?
-                "bus": "virtio"
-            }
+        if dialog.exec():
+            data = dialog.get_data()
 
-            self.disks.append(disk_data)
+            if not data["path"]:
+                QMessageBox.warning(self, "Error", "Disk path is required.")
+                return
+
+            self.disks.append(data)
             self.refresh_list()
 
     # Remove
@@ -80,13 +76,13 @@ class PageStorage(QWizardPage):
         for disk in self.disks:
             if disk["mode"] == "create":
                 text = (
-                    f"[NEW] {disk['path']} | "
+                    f"[NEW] {disk['path']}.{disk['fmat']} | "
+                    f"{disk['fmat']} | "
                     f"{disk['size']}GB | "
-                    f"{disk['format']} | "
                     f"{disk['bus']}"
                 )
             else:
-                text = f"[EXISTING] {disk['path']}"
+                text = f"[EXISTING] {disk['path']} | {disk['bus']}"
 
             self.disk_list.addItem(text)
 

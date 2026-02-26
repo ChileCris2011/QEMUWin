@@ -6,25 +6,14 @@ from PyQt6.QtWidgets import (
 )
 
 
-class CreateDiskDialog(QDialog):
+class SelectDiskDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Create Virtual Disk")
+        self.setWindowTitle("Select Virtual Disk")
         self.resize(450, 200)
 
         layout = QVBoxLayout()
         form = QFormLayout()
-
-        # Name and format
-        self.disk_name = QLineEdit()
-
-        self.disk_format = QComboBox()
-        self.disk_format.addItems(["qcow2", "raw"])
-
-        name_layout = QHBoxLayout()
-
-        name_layout.addWidget(self.disk_name)
-        name_layout.addWidget(self.disk_format)
 
         # Path
         self.path_edit = QLineEdit()
@@ -36,18 +25,11 @@ class CreateDiskDialog(QDialog):
         path_layout.addWidget(self.path_edit)
         path_layout.addWidget(browse)
 
-        # Size
-        self.size = QSpinBox()
-        self.size.setRange(1, 2048)
-        self.size.setValue(20)
-
         # Bus
         self.bus = QComboBox()
         self.bus.addItems(["virtio", "sata", "ide", "scsi"])
 
-        form.addRow("Name/Format:", name_layout)
         form.addRow("Path:", path_layout)
-        form.addRow("Size (GB):", self.size)
         form.addRow("Bus:", self.bus)
 
         layout.addLayout(form)
@@ -64,19 +46,17 @@ class CreateDiskDialog(QDialog):
         self.setLayout(layout)
 
     def select_path(self):
-        path= QFileDialog.getExistingDirectory(
+        path = QFileDialog.getOpenFileName(
             self,
-            "Disk Location"
+            "Disk Location",
+            filter="QCOW2 (*.qcow2);;RAW (*.raw)"
         )
         if path:
             self.path_edit.setText(path)
 
     def get_data(self):
         return {
-            "mode": "create",
-            "name": self.disk_name.text(),
-            "fmat": self.disk_format.currentText(),
+            "mode": "exixtent",
             "path": self.path_edit.text(),
-            "size": self.size.value(),
             "bus": self.bus.currentText()
         }

@@ -9,9 +9,8 @@ QEMUWin *will be* a new, simple-to-use Python-based interface for Windows that p
    
 ---
    
-### Beta GUI v1:
+### RC GUI v1:
 
-I'm happy to see that all my effort is giving results. This is the first release of the real GUI and, even with all it's bugs, I'm proud to see results off of my work.   
-   
-Just like the previous release, this version isn't intended for general use yet. It contains too many bugs (most of which I probably don't even know about)!  
-Since I don't think this version(s) will be available for very long, I won't write the user guide until I have the first stable version.
+We're finally reaching the final interface. RC GUI v1 brings several changes to VM creation/editing, the error window, logs, and much more. We're getting closer to our goal.
+
+This release can be used normally (*although I wouldn't recommend it yet*). The application's executable can be found in the [Releases](https://github.com/ChileCris2011/QEMUWin/releases) tab. Remember that you must have [QEMU](https://www.qemu.org/download/#windows) installed on your system.

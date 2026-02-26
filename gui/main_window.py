@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout,
+    QMainWindow, QWidget, QVBoxLayout, QStyle,
     QPushButton, QHBoxLayout, QLabel, QMessageBox
 )
 from PySide6.QtCore import Signal
@@ -12,6 +12,7 @@ from backend.config_manager import ConfigManager
 from gui.vm_list_widget import VMListWidget
 from gui.styles import APP_STYLE
 
+import logging
 
 class MainWindow(QMainWindow):
 
@@ -42,15 +43,31 @@ class MainWindow(QMainWindow):
         # Toolbar
         toolbar_layout = QHBoxLayout()
 
-        self.btn_new = QPushButton("➕ New")
-        self.btn_start = QPushButton("▶ Start")
-        self.btn_stop = QPushButton("⏹ Stop")
-        self.btn_edit = QPushButton("⚙ Edit")
-        self.btn_delete = QPushButton("🗑 Delete")
+        self.btn_new = QPushButton("New")
+        self.btn_start = QPushButton("Start")
+        self.btn_stop = QPushButton("Stop")
+        self.btn_kill = QPushButton("Kill")
+        self.btn_edit = QPushButton("Edit")
+        self.btn_delete = QPushButton("Delete")
+
+        new_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder)
+        start_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay)
+        stop_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaStop)
+        kill_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserStop)
+        edit_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon)
+        delete_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)
+
+        self.btn_new.setIcon(new_icon)
+        self.btn_start.setIcon(start_icon)
+        self.btn_stop.setIcon(stop_icon)
+        self.btn_kill.setIcon(kill_icon)
+        self.btn_edit.setIcon(edit_icon)
+        self.btn_delete.setIcon(delete_icon)
 
         toolbar_layout.addWidget(self.btn_new)
         toolbar_layout.addWidget(self.btn_start)
         toolbar_layout.addWidget(self.btn_stop)
+        toolbar_layout.addWidget(self.btn_kill)
         toolbar_layout.addWidget(self.btn_edit)
         toolbar_layout.addWidget(self.btn_delete)
         toolbar_layout.addStretch()
@@ -68,6 +85,7 @@ class MainWindow(QMainWindow):
         self.btn_new.clicked.connect(self._new_vm)
         self.btn_start.clicked.connect(self._start)
         self.btn_stop.clicked.connect(self._stop)
+        self.btn_stop.clicked.connect(self._kill)
         self.btn_edit.clicked.connect(self._edit_vm)
         self.btn_delete.clicked.connect(self._delete_vm)
 
@@ -77,20 +95,31 @@ class MainWindow(QMainWindow):
         name = self.vm_list.get_selected()
         if name:
             self.manager.start_vm(name)
-            print(f"Starting {name}")
+            logging.info(f"Starting {name}")
         else:
-            print(f"No VM was selected")
+            logging.warning("Tried to start a VM, but no VM was selected")
 
     def _stop(self):
         name = self.vm_list.get_selected()
         if name:
             if self.manager.get_state(name).value != "stopped":
                 self.manager.stop_vm(name)
-                print(f"Sending shutdown signal to {name}")
+                logging.info(f"Sending shutdown signal to {name}")
             else:
-                print(f"VM {name} is not started")
+                logging.warning(f"Tried to send shutdown signal to VM {name}, but it is not started")
         else:
-            print(f"No VM was selected")
+            logging.warning(f"Tried to send shutdown signal to a VM but no VM was selected")
+
+    def _kill(self):
+        name = self.vm_list.get_selected()
+        if name:
+            if self.manager.get_state(name).value != "stopped":
+                logging.info(f"Quitting {name} process")
+                self.manager.kill_vm(name)
+            else:
+                logging.warning(f"Tried to quit VM {name}, but it is not started")
+        else:
+            logging.warning("Tried to quit a VM but no VM was selected")
 
     def _new_vm(self):
         wizard = CreateVMWizard()
@@ -105,10 +134,9 @@ class MainWindow(QMainWindow):
         
         config = ConfigManager()
          
-        self.edit_window = EditVMWindow(config.load_vm(name))
+        self.edit_window = EditVMWindow(config.load_vm(name), self.vm_list)
         
-        if self.edit_window.show():
-            self.vm_list.refresh()
+        self.edit_window.show()
 
     def _delete_vm(self):
         name = self.vm_list.get_selected()
@@ -139,6 +167,7 @@ class MainWindow(QMainWindow):
 
     def _backend_state_changed(self, name, state):
         self.vm_state_changed.emit(name, state)
+        self._update_buttons()
 
 
     def _update_vm_ui(self, name, state):
@@ -150,6 +179,7 @@ class MainWindow(QMainWindow):
         if not name:
             self.btn_start.setDisabled(True)
             self.btn_stop.setDisabled(True)
+            self.btn_kill.setDisabled(True)
             self.btn_edit.setDisabled(True)
             self.btn_delete.setDisabled(True)
             return
@@ -158,5 +188,6 @@ class MainWindow(QMainWindow):
 
         self.btn_start.setDisabled(state.value == "running")
         self.btn_stop.setDisabled(state.value != "running")
+        self.btn_kill.setDisabled(state.value != "running")
         self.btn_edit.setDisabled(state.value != "stopped")
         self.btn_delete.setDisabled(state.value != "stopped")

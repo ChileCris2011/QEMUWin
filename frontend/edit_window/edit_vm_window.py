@@ -24,7 +24,7 @@ from frontend.edit_window.dialogs.add_device_dialog import AddDeviceDialog
 import copy
 
 class EditVMWindow(QMainWindow):
-    def __init__(self, vm_config):
+    def __init__(self, vm_config, vm_list):
         super().__init__()
 
         self.setWindowTitle(f"Edit VM - {vm_config.get('name', '')}")
@@ -32,6 +32,8 @@ class EditVMWindow(QMainWindow):
 
         self.original_config = vm_config
         self.vm_config = copy.deepcopy(vm_config)
+
+        self.vm_list = vm_list
 
         self.pages = []
 
@@ -109,7 +111,6 @@ class EditVMWindow(QMainWindow):
         # Network
         if self.vm_config.get("network"):
             for i, net in enumerate(self.vm_config.get("network")):
-                print("IN:", net)
                 self.add_page(f"NIC {i+1}", NetworkPage(net))
 
         # Audio
@@ -215,16 +216,20 @@ class EditVMWindow(QMainWindow):
         return new_config
 
     def apply_changes(self):
+        from backend.vm_manager import VMManager
+
+        manager = VMManager()
 
         self.vm_config = self.collect_all_data()
+
+        manager.edit_vm(self.original_config.get("name"), self.vm_config)
 
         QMessageBox.information(
             self,
             "Changes Applied",
             "Changes have been applied succesfully"
         )
-
-        from backend.vm_manager import VMManager
-        manager = VMManager()
-        manager.edit_vm() # <--- TODO: End this please
+        
         self.close()
+
+        self.vm_list.refresh()

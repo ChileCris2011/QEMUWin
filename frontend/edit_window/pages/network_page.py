@@ -5,8 +5,6 @@ class NetworkPage(QWidget):
     def __init__(self, config: list):
         super().__init__()
 
-        print("NetworkPage result:", config)
-
         layout = QFormLayout()
 
         self.type = QComboBox()

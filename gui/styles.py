@@ -7,8 +7,9 @@ QDialog {
     background-color: #1e1e1e;
 }
 
-QWizard {
+QWizard, QWizard QWidget, QWizardPage {
     background-color: #1e1e1e;
+    color: #ffffff;
 }
 
 QLabel {
@@ -22,6 +23,14 @@ QPushButton {
     padding: 6px 12px;
     border-radius: 6px;
     color: #ffffff
+}
+
+QPushButton:disabled {
+    background-color: #474747;
+    border: 1px solid #3c3c3c;
+    padding: 6px 12px;
+    border-radius: 6px;
+    color: #e6e6e6
 }
 
 QPushButton:hover {
