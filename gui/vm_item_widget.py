@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout
-from PySide6.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout
+from PyQt6.QtCore import Qt
 
 class VMItemWidget(QWidget):
     def __init__(self, name, state="stopped", memory="Unknown"):

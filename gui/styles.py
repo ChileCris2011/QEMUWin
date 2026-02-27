@@ -7,11 +7,6 @@ QDialog {
     background-color: #1e1e1e;
 }
 
-QWizard, QWizard QWidget, QWizardPage {
-    background-color: #1e1e1e;
-    color: #ffffff;
-}
-
 QLabel {
     color: #ffffff;
     font-size: 13px;

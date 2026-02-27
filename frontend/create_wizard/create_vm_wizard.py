@@ -20,8 +20,7 @@ class CreateVMWizard(QWizard):
 
         self.setWindowTitle("Create New Virtual Machine")
         self.resize(720, 520)
-        self.setStyleSheet(APP_STYLE)
-        self.setWizardStyle(QWizard.WizardStyle.ClassicStyle)
+        self.setWizardStyle(QWizard.WizardStyle.ModernStyle)
 
         self.vm_config = {}
         self.vm_manager = VMManager()

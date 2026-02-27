@@ -29,7 +29,7 @@ class EditVMWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle(f"Edit VM - {vm_config.get('name', '')}")
-        self.resize(1000, 650)
+        self.resize(800, 550)
 
         self.original_config = vm_config
         self.vm_config = copy.deepcopy(vm_config)

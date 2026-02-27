@@ -12,7 +12,7 @@ class AddMediaDialog(QDialog):
         self.resize(400, 150)
 
         layout = QVBoxLayout()
-        form = QFormLayout()
+        self.form = QFormLayout()
 
         # Media type
         self.media_type = QComboBox()
@@ -20,6 +20,8 @@ class AddMediaDialog(QDialog):
         # Block Floppy options if there's already 2
         if addfloppy:
             self.media_type.addItem("Floppy")
+        
+        self.media_type.currentTextChanged.connect(self._on_media_change)
 
         # Path
         self.path_edit = QLineEdit()
@@ -30,10 +32,20 @@ class AddMediaDialog(QDialog):
         path_layout.addWidget(self.path_edit)
         path_layout.addWidget(browse_btn)
 
-        form.addRow("Media Type:", self.media_type)
-        form.addRow("File:", path_layout)
+        # Bus
+        self.bus_box = QComboBox()
+        self.bus_box.addItems(["virtio", "sata", "ide", "scsi"])
+        self.bus_dummy = QComboBox()
+        self.bus_dummy.addItem("fdc")
+        self.bus_dummy.setDisabled(True)
 
-        layout.addLayout(form)
+        self.form.addRow("Media Type:", self.media_type)
+        self.form.addRow("File:", path_layout)
+        self.form.addRow("Bus:", self.bus_box)
+        self.form.addRow("Bus:", self.bus_dummy)
+        self.form.setRowVisible(3, False)
+
+        layout.addLayout(self.form)
 
         # Buttons
         buttons = QDialogButtonBox(
@@ -56,10 +68,19 @@ class AddMediaDialog(QDialog):
         if path:
             self.path_edit.setText(path)
 
+    def _on_media_change(self):
+        if self.media_type.currentText() == "CD-ROM":
+            self.form.setRowVisible(2, True)
+            self.form.setRowVisible(3, False)
+        else:
+            self.form.setRowVisible(3, True)
+            self.form.setRowVisible(2, False)
+
     def get_data(self):
         return {
             "type": self.media_type.currentText(),
-            "path": self.path_edit.text() if self.path_edit.text() else "Empty"
+            "path": self.path_edit.text() if self.path_edit.text() else "Empty",
+            "bus": self.bus_box.currentText() if self.media_type.currentText() == "CD-ROM" else "fdc"
         }
 
     def accept(self):

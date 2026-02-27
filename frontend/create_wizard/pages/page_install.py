@@ -13,6 +13,8 @@ class PageInstall(QWizardPage):
 
         layout = QVBoxLayout()
 
+        self.media = []
+
         self.media_list = QListWidget()
         layout.addWidget(self.media_list)
 
@@ -36,7 +38,8 @@ class PageInstall(QWizardPage):
         dialog = AddMediaDialog(floppys < 2, self)
         if dialog.exec():
             data = dialog.get_data()
-            display = f"[{data['type']}] {data['path']}"
+            display = f"[{data['type']}] {data['path']} | {data['bus']}"
+            self.media.append(f"{data['type']},{data['path']},{data['bus']}")
             self.media_list.addItem(display)
         floppys = len(self.media_list.findItems("[Floppy]", Qt.MatchFlag.MatchStartsWith)) # Yeah, didn't want to create a function
         self.toomuchfloppys.setVisible(floppys >= 2)
@@ -47,15 +50,16 @@ class PageInstall(QWizardPage):
             self.media_list.takeItem(row)
 
     def get_data(self):
-        media = []
+        data = []
 
-        for i in range(self.media_list.count()):
-            text = self.media_list.item(i).text()
-            type_part = text.split("]")[0][1:]
-            path_part = text.split("] ")[1]
-            media.append({
-                "type": type_part,
-                "path": path_part
+        for media in self.media:
+            
+            elements = media.split(",")
+            
+            data.append({
+                "type": elements[0],
+                "path": elements[1],
+                "bus": elements[2]
             })
 
-        return {"media": media}
+        return {"media": data}

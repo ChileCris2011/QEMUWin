@@ -1,5 +1,5 @@
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QListWidget, QListWidgetItem, QMenu, QMessageBox
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QListWidget, QListWidgetItem, QMenu, QMessageBox
 from gui.vm_item_widget import VMItemWidget, DummyItem
 
 class VMListWidget(QListWidget):
@@ -9,7 +9,7 @@ class VMListWidget(QListWidget):
         self.setSpacing(8)
         self.refresh()
 
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._open_context_menu)
 
     def refresh(self):

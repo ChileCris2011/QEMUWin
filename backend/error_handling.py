@@ -1,6 +1,8 @@
-import traceback
+import traceback, faulthandler
 from gui.error_dialog import ErrorDialog
 
+log_file = open("app.log", "a", encoding="utf-8")
+faulthandler.enable(log_file)
 
 def thread_exception_hook(args):
     error_text = ''.join(
