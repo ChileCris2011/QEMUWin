@@ -43,6 +43,7 @@ class CdromPage(QWidget):
 
     def get_data(self):
         return {
+            "cdrom": "cdrom",
             "path": self.path.text(),
             "bus": self.bus.currentText()
         }

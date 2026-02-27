@@ -10,7 +10,7 @@ import logging
 
 logging.basicConfig(
     filename="app.log",
-    level=logging.ERROR,
+    level=logging.DEBUG,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
@@ -25,3 +25,5 @@ if __name__ == "__main__":
     sys.excepthook = error_handler.global_exception_hook
 
     sys.exit(app.exec())
+
+    # TODO: Pantalla embebida, apartado de configuración con QEMU path y ubicación de configuraciones, auto-detectar QEMU, bus en selección de medios

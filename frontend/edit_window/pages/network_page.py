@@ -22,6 +22,7 @@ class NetworkPage(QWidget):
 
     def get_data(self):
         return {
+            "network": "network",
             "type": self.type.currentText(),
             "model": self.model.currentText()
         }

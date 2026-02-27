@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QListWidget, QListWidgetItem, QMenu, QMessageBox
-from gui.vm_item_widget import VMItemWidget
+from gui.vm_item_widget import VMItemWidget, DummyItem
 
 class VMListWidget(QListWidget):
     def __init__(self, manager):
@@ -15,20 +15,27 @@ class VMListWidget(QListWidget):
     def refresh(self):
         self.clear()
 
-        for vm_name in self.manager.list_vms():
-            config = self.manager.config.load_vm(vm_name)
+        if self.manager.list_vms():
+            for vm_name in self.manager.list_vms():
+                config = self.manager.config.load_vm(vm_name)
 
-            item = QListWidgetItem()
-            widget = VMItemWidget(
-                vm_name,
-                state="stopped",
-                memory=config.get("memory", "Unknown")
-            )
+                item = QListWidgetItem()
+                widget = VMItemWidget(
+                    vm_name,
+                    state="stopped",
+                    memory=config.get("memory", "Unknown")
+                )
 
-            item.setSizeHint(widget.sizeHint())
+                item.setSizeHint(widget.sizeHint())
 
-            self.addItem(item)
-            self.setItemWidget(item, widget)
+                self.addItem(item)
+                self.setItemWidget(item, widget)
+        else:
+            dummy_item = QListWidgetItem()
+            dummy_widget = DummyItem("vmEmpty", "No Machines added. Start creating a machine!")
+            self.addItem(dummy_item)
+            self.setItemWidget(dummy_item, dummy_widget)
+    
 
     def get_selected(self):
         item = self.currentItem()

@@ -10,6 +10,7 @@ from frontend.edit_window.edit_vm_window import EditVMWindow
 from backend.config_manager import ConfigManager
 
 from gui.vm_list_widget import VMListWidget
+from gui.icon_manager import IconManager
 from gui.styles import APP_STYLE
 
 import logging
@@ -21,6 +22,8 @@ class MainWindow(QMainWindow):
     def __init__(self, manager):
         super().__init__()
         self.manager = manager
+
+        self.icon_manager = IconManager(mode="dark")
 
         self.setWindowTitle("QEMU Manager")
         self.resize(800, 500)
@@ -50,19 +53,12 @@ class MainWindow(QMainWindow):
         self.btn_edit = QPushButton("Edit")
         self.btn_delete = QPushButton("Delete")
 
-        new_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder)
-        start_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay)
-        stop_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaStop)
-        kill_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserStop)
-        edit_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon)
-        delete_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)
-
-        self.btn_new.setIcon(new_icon)
-        self.btn_start.setIcon(start_icon)
-        self.btn_stop.setIcon(stop_icon)
-        self.btn_kill.setIcon(kill_icon)
-        self.btn_edit.setIcon(edit_icon)
-        self.btn_delete.setIcon(delete_icon)
+        self.btn_new.setIcon(self.icon_manager.get_icon("new_window"))
+        self.btn_start.setIcon(self.icon_manager.get_icon("play_arrow"))
+        self.btn_stop.setIcon(self.icon_manager.get_icon("stop"))
+        self.btn_kill.setIcon(self.icon_manager.get_icon("close"))
+        self.btn_edit.setIcon(self.icon_manager.get_icon("edit"))
+        self.btn_delete.setIcon(self.icon_manager.get_icon("delete"))
 
         toolbar_layout.addWidget(self.btn_new)
         toolbar_layout.addWidget(self.btn_start)

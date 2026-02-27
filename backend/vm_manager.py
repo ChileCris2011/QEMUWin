@@ -3,7 +3,7 @@ from backend.vm_process import VMProcess
 from backend.vm_state import VMState
 from backend.port_manager import QMPPortManager
 
-import subprocess, os
+import subprocess, os, logging
 
 
 class VMManager:
@@ -98,9 +98,9 @@ class VMManager:
 
             if mode == "create":
                 self._create_disk_file(disk)
+                disk["path"] = f"{disk["path"]}\\{disk["name"]}.{disk["fmat"]}"
                 disk.pop("size", None)
                 disk.pop("fmat", None)
-                disk["path"] = f"{disk["path"]}\\{disk["name"]}.{disk["fmat"]}"
                 disk.pop("name")
 
             # Delete creation tag
@@ -130,4 +130,10 @@ class VMManager:
             f"{size}G"
         ]
 
-        subprocess.run(cmd, check=True)
+        command = subprocess.run(cmd, capture_output=True)
+
+        if command.returncode != 0:
+            logging.error(command.stderr)
+            logging.error(command.stdout.decode())
+        else:
+            logging.debug(command.stdout.decode())

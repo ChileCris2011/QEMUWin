@@ -98,8 +98,8 @@ class VMProcess:
         
         #print(cmd)
 
-        if self.config.get("custom_flags"):
-            cmd += self.config.get("custom_flags")
+        if self.config.get("qargs"):
+            cmd += self.config.get("qargs")
 
         #print(cmd)
 

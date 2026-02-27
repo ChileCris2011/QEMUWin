@@ -5,7 +5,6 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox
 )
 
-
 class SelectDiskDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -46,11 +45,12 @@ class SelectDiskDialog(QDialog):
         self.setLayout(layout)
 
     def select_path(self):
-        path = QFileDialog.getOpenFileName(
+        path, _ = QFileDialog.getOpenFileName(
             self,
             "Disk Location",
             filter="QCOW2 (*.qcow2);;RAW (*.raw)"
         )
+        print(path)
         if path:
             self.path_edit.setText(path)
 
