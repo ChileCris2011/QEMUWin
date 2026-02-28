@@ -1,8 +1,8 @@
-from PySide6.QtWidgets import (
+from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QStyle,
     QTextEdit, QPushButton, QHBoxLayout
 )
-from PySide6.QtCore import QSize
+from PyQt6.QtCore import QSize
 
 class ErrorDialog(QDialog):
     def __init__(self, message, details, parent=None):

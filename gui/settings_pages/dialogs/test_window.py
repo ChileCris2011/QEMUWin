@@ -1,14 +1,17 @@
-from PySide6.QtWidgets import (
+from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QStyle,
     QTextEdit, QPushButton, QHBoxLayout
 )
-from PySide6.QtCore import QSize
+from PyQt6.QtCore import QSize
 
 class TestDialog(QDialog):
-    def __init__(self, code: int, message: str, parent=None):
+    def __init__(self, code: int, message, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Test result")
-        self.resize(200, 250)
+        if code == 0:
+            self.resize(200, 200)
+        else:
+            self.resize(200, 100)
 
         layout = QVBoxLayout(self)
 
@@ -34,7 +37,7 @@ class TestDialog(QDialog):
         if code != 0:
             self.details = QTextEdit()
             self.details.setReadOnly(True)
-            self.details.setPlainText(message)
+            self.details.setPlainText(f"{message}")
             self.details.hide()
             layout.addWidget(self.details)
 

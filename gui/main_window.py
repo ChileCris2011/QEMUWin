@@ -26,6 +26,7 @@ class MainWindow(QMainWindow):
         self.app = app
 
         self.icon_manager = IconManager(mode="dark", app=self.app)
+        self.theme_manager = ThemeManager(self.app)
 
         self.setWindowTitle("QEMU Manager")
         self.resize(800, 500)
@@ -34,6 +35,7 @@ class MainWindow(QMainWindow):
 
         self.manager.on_vm_state_changed = self._backend_state_changed
         self.vm_state_changed.connect(self._update_vm_ui)
+        self.theme_manager.themeChanged.connect(self._build_ui)
 
     def _build_ui(self):
         central = QWidget()
@@ -86,7 +88,7 @@ class MainWindow(QMainWindow):
         self.btn_new.clicked.connect(self._new_vm)
         self.btn_start.clicked.connect(self._start)
         self.btn_stop.clicked.connect(self._stop)
-        self.btn_stop.clicked.connect(self._kill)
+        self.btn_kill.clicked.connect(self._kill)
         self.btn_edit.clicked.connect(self._edit_vm)
         self.btn_delete.clicked.connect(self._delete_vm)
         self.btn_config.clicked.connect(self._open_config)
@@ -116,8 +118,16 @@ class MainWindow(QMainWindow):
         name = self.vm_list.get_selected()
         if name:
             if self.manager.get_state(name).value != "stopped":
-                logging.info(f"Quitting {name} process")
-                self.manager.kill_vm(name)
+                reply = QMessageBox.warning(
+                    self,
+                    "Kill VM",
+                    f"Are you sure you want to force {name} to shut down?\n\nThis can cause data corruption. Only use this if the machine becomes unresponsive.",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+
+                if reply == QMessageBox.StandardButton.Yes:
+                    logging.info(f"Forcing {name} to shut down")
+                    self.manager.kill_vm(name)
             else:
                 logging.warning(f"Tried to quit VM {name}, but it is not started")
         else:
@@ -168,7 +178,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, "Error", str(e))
 
     def _open_config(self):
-        settings_dialog = SettingsDialog(self.icon_manager)
+        settings_dialog = SettingsDialog(self.icon_manager, self.theme_manager)
         if settings_dialog.exec():
             pass
 

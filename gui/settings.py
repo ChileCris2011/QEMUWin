@@ -12,12 +12,14 @@ from gui.settings_pages.theme_page import ThemePage
 from gui.settings_pages.about_page import AboutPage
 
 class SettingsDialog(QDialog):
-    def __init__(self, icon_manager, parent=None):
+    def __init__(self, icon_manager, theme_manager, parent=None):
         super().__init__(parent)
         self.setWindowTitle("QEMUWin Settings")
         self.resize(600, 350)
         self.icon_manager = icon_manager
         self.setWindowIcon(self.icon_manager.get_icon("settings"))
+
+        self.theme_manager = theme_manager
 
         self.pages = []
 
@@ -77,4 +79,14 @@ class SettingsDialog(QDialog):
         self.accept()
     
     def apply_changes(self):
-        pass
+        from PyQt6.QtCore import QSettings
+        settings = QSettings("QEMUWin", "QEMUWin")
+
+        for page in self.pages:
+            if hasattr(page, "get_data"):
+                data = page.get_data()
+
+                if "qemu_path" in data:
+                    settings.setValue("qemu/path", data["qemu_path"])
+                elif "theme" in data:
+                    self.theme_manager.set_mode(data["theme"])

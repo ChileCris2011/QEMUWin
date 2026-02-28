@@ -2,5 +2,4 @@ virt/
 vms/
 __pycache__/
 
-app.log
-qemuwin.json
+latest.log

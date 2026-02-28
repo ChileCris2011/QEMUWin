@@ -3,7 +3,7 @@ from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtGui import QGuiApplication, QPalette, QColor, QPixmap, QPainter, QIcon
 from PyQt6.QtWidgets import QApplication
 
-import os
+import os, copy
 
 class ThemeMode:
     AUTO = "auto"
@@ -17,12 +17,20 @@ class ThemeManager(QObject):
     def __init__(self, app: QApplication):
         super().__init__()
         self.app = app
-        self.settings = QSettings("QEMUManager", "QEMUManager")
+
+        app.setStyle("fusion")
+
+        self.settings = QSettings("QEMUWin", "QEMUWin")
 
         self._style_hints = QGuiApplication.styleHints()
         self._style_hints.colorSchemeChanged.connect(self._on_system_scheme_changed)
 
-        self._mode = self.settings.value("theme/mode", ThemeMode.AUTO)
+        self._mode = ThemeMode.AUTO
+
+        if self.settings.value("theme/mode"):
+            self._mode = self.settings.value("theme/mode")
+        else:
+            self.settings.setValue("theme/mode", ThemeMode.AUTO)
 
     # -------------------------
     # API pública
@@ -43,8 +51,8 @@ class ThemeManager(QObject):
         self.apply()
 
     def apply(self):
-        if self._mode == ThemeMode.AUTO:
-            effective_mode = self._resolve_effective_mode()
+
+        effective_mode = self._resolve_effective_mode()
 
         if effective_mode == ThemeMode.DARK:
             self._apply_dark_palette()
@@ -58,6 +66,7 @@ class ThemeManager(QObject):
     # -------------------------
 
     def _resolve_effective_mode(self) -> str:
+        self._mode = self.settings.value("theme/mode")
         if self._mode == ThemeMode.AUTO:
             scheme = self._style_hints.colorScheme()
             if scheme == Qt.ColorScheme.Dark:
@@ -70,52 +79,66 @@ class ThemeManager(QObject):
             self.apply()
 
     def _apply_light_palette(self):
-        palette = QPalette()
+        dark_palette = QPalette()
 
-        palette.setColor(QPalette.ColorRole.Window, QColor(245, 245, 245))
-        palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
+        dark_palette.setColor(QPalette.ColorRole.Window, QColor(245, 245, 245))
+        dark_palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
 
-        palette.setColor(QPalette.ColorRole.Base, QColor(247, 247, 250))
-        palette.setColor(QPalette.ColorRole.AlternateBase, QColor(247, 245, 245))
+        dark_palette.setColor(QPalette.ColorRole.Base, QColor(247, 247, 250))
+        dark_palette.setColor(QPalette.ColorRole.AlternateBase, QColor(247, 245, 245))
 
-        palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.black)
-        palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.black)
+        dark_palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.black)
+        dark_palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.black)
 
-        palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)
+        dark_palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)
 
-        palette.setColor(QPalette.ColorRole.Button, QColor(250, 245, 245))
-        palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
+        dark_palette.setColor(QPalette.ColorRole.Button, QColor(250, 245, 245))
+        dark_palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
 
-        palette.setColor(QPalette.ColorRole.Highlight, QColor(0, 120, 215))
-        palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
+        dark_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, QColor(210, 210, 210))
+        dark_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, QColor(190, 190, 190))
 
-        palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+        dark_palette.setColor(QPalette.ColorRole.Highlight, QColor(0, 120, 215, 127))
+        dark_palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
 
-        self.app.setPalette(palette)
+        dark_palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+
+        self.app.setPalette(dark_palette)
 
     def _apply_dark_palette(self):
-        palette = QPalette()
+        light_palette = QPalette()
 
-        palette.setColor(QPalette.ColorRole.Window, QColor(37, 37, 38))
-        palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
+        light_palette.setColor(QPalette.ColorRole.Window, QColor(37, 37, 38))
+        light_palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
 
-        palette.setColor(QPalette.ColorRole.Base, QColor(30, 30, 30))
-        palette.setColor(QPalette.ColorRole.AlternateBase, QColor(45, 45, 45))
+        light_palette.setColor(QPalette.ColorRole.Base, QColor(30, 30, 30))
+        light_palette.setColor(QPalette.ColorRole.AlternateBase, QColor(45, 45, 45))
 
-        palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
-        palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
+        light_palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(42, 42, 42))
+        light_palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
 
-        palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
+        light_palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
 
-        palette.setColor(QPalette.ColorRole.Button, QColor(45, 45, 45))
-        palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
+        light_palette.setColor(QPalette.ColorRole.Button, QColor(42, 42, 42))
+        light_palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
 
-        palette.setColor(QPalette.ColorRole.Highlight, QColor(0, 120, 215))
-        palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
+        light_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, QColor(100, 100, 100))
+        light_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, QColor(190, 190, 190))
 
-        palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+        light_palette.setColor(QPalette.ColorRole.Light, QColor(42, 42, 42))
+        light_palette.setColor(QPalette.ColorRole.Midlight, QColor(42, 42, 42))
+        light_palette.setColor(QPalette.ColorRole.Mid, QColor(42, 42, 42))
+        light_palette.setColor(QPalette.ColorRole.Dark, QColor(42, 42, 42))
+        light_palette.setColor(QPalette.ColorRole.Shadow, Qt.GlobalColor.black)
 
-        self.app.setPalette(palette)
+        light_palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(42, 42, 42))
+
+        light_palette.setColor(QPalette.ColorRole.Highlight, QColor(0, 120, 215, 127))
+        light_palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
+
+        light_palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+
+        self.app.setPalette(light_palette)
 
 class IconManager:
     _instance = None

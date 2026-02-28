@@ -1,26 +1,36 @@
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout,
-    QLabel, QHBoxLayout,
-    QHBoxLayout
+    QWidget, QFormLayout,
+    QLabel, QComboBox,
 )
+
+from PyQt6.QtCore import QSettings
 
 class ThemePage(QWidget):
     def __init__(self):
         super().__init__()
 
-        layout = QVBoxLayout()
+        self.settings = QSettings("QEMUWin", "QEMUWin")
 
-        layout.addStretch()
+        layout = QFormLayout()
 
-        qemuwin_layout = QHBoxLayout()
-        qemuwin_layout.addStretch()
-        qemuwin = QLabel("QEMUWin")
-        qemuwin.setStyleSheet("font-size: 24px; font-weight: bold;")
-        qemuwin_layout.addWidget(qemuwin)
-        qemuwin_layout.addStretch()
+        title = QLabel("Application Theme")
+        title.setStyleSheet("font-size: 12px; font-weight: bold;")
 
-        layout.addLayout(qemuwin_layout)
+        self.theme = QComboBox()
+        self.theme.addItems(["Automatic (system)", "Dark", "Light"])
 
-        layout.addStretch()
+        self.theme_trs = ["auto", "dark", "light"]
+
+        self._mode = self.settings.value("theme/mode")
+
+        self.theme.setCurrentIndex(self.theme_trs.index(f"{self._mode}"))
+
+        layout.addRow(title)
+        layout.addRow("Mode:", self.theme)
 
         self.setLayout(layout)
+    
+    def get_data(self):
+        return {
+            "theme": self.theme_trs[self.theme.currentIndex()]
+        }

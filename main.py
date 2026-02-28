@@ -1,17 +1,16 @@
-import sys
-import threading
-import time
-from PyQt6.QtWidgets import QApplication
+import sys, threading, logging
+from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtCore import QSettings
 from backend.vm_manager import VMManager
 from gui.main_window import MainWindow
 from gui.theme_manager import ThemeManager
 
 import backend.error_handling as error_handler
 
-import logging
+open("./latest.log", "w", encoding="utf-8")
 
 logging.basicConfig(
-    filename="app.log",
+    filename="latest.log",
     level=logging.DEBUG,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -24,7 +23,7 @@ if __name__ == "__main__":
     threading.excepthook = error_handler.thread_exception_hook
     sys.excepthook = error_handler.global_exception_hook
     logging.info("----------------------------")
-    logging.info("----QEMUWin V1.2-nightly----")
+    logging.info("-------- QEMUWin V1 --------")
     logging.info("----------------------------")
 
     app = QApplication(sys.argv)
@@ -38,6 +37,19 @@ if __name__ == "__main__":
     window = MainWindow(manager, app)
     window.show()
 
+    settings = QSettings("QEMUWin", "QEMUWin")
+    if settings.value("QEMUWin", 0) == 0:
+        message = QMessageBox.question(
+            None,
+            "QEMUWin",
+            f"This is your first time running QEMUWin.\n\nDo you want to set the QEMU path?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        if message == QMessageBox.StandardButton.Yes:
+            window._open_config()
+
+        settings.setValue("QEMUWin", 1)
+
     sys.exit(app.exec())
 
-# TODO: Pantalla embebida, apartado de configuración con QEMU path y ubicación de configuraciones, auto-detectar QEMU, warning window for no vm name
+# TODO: Pantalla embebida, warning window for no vm name

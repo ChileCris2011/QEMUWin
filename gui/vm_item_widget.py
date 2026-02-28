@@ -29,6 +29,7 @@ class VMItemWidget(QWidget):
     def _state_icon(self, state):
         icons = {
             "stopped": "🔴",
+            "killed": "❌",
             "starting": "🟡",
             "running": "🟢",
             "paused": "🔵",

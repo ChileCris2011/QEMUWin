@@ -14,6 +14,8 @@ class VMProcess:
         self.state = VMState.STOPPED
         self.qmp = None
 
+        self.killed = False
+
         self.on_state_changed = None
         self.on_stopped = None
 
@@ -125,9 +127,15 @@ class VMProcess:
         return "raw"
 
     def _monitor(self):
-        self.process.wait()
-        self._set_state(VMState.STOPPED)
-
+        code = self.process.wait()
+        if code == 0:
+            if self.killed:
+                self._set_state(VMState.KILLED)
+                self.killed = False
+            else:
+                self._set_state(VMState.STOPPED)
+        else:
+            self._set_state(VMState.ERROR)
         if self.on_stopped:
             self.on_stopped(self.name)
 
@@ -141,5 +149,6 @@ class VMProcess:
         if self.qmp:
             try:
                 self.qmp.quit()
+                self.killed = True
             except:
                 raise RuntimeError("Failed to end VM process")

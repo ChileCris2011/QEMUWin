@@ -1,8 +1,9 @@
 from PyQt6.QtWidgets import (
     QWidget, QFormLayout,
     QLabel, QLineEdit,
-    QHBoxLayout, QPushButton,
-    QFileDialog
+    QHBoxLayout, QVBoxLayout,
+    QFileDialog, QPushButton,
+    QMessageBox
 )
 
 import subprocess, logging
@@ -46,14 +47,37 @@ class QEMUPathPage(QWidget):
         path_layout.addWidget(self.qemu_folder)
         path_layout.addWidget(browse)
 
-        layout.addRow(title)
-        layout.addRow(path_layout)
-        layout.addRow(test_layout)
-
         test_all.clicked.connect(self._test_all)
         test_64.clicked.connect(self._test_64)
 
         browse.clicked.connect(self._browse_folder)
+
+        log_pres = QVBoxLayout()
+
+        log_title = QLabel("QEMUWin logs")
+        log_title.setStyleSheet("font-size: 12px; font-weight: bold;")
+
+        log_text = QLabel("QEMUWin keeps a log of events, errors, and debug messages. You can read it to troubleshoot problems with QEMUWin or your VM. It's also necessary if you report a problem on GitHub.", wordWrap=True)
+
+        log_buttons = QHBoxLayout()
+        log_open = QPushButton("Open latest.log")
+        folder_open = QPushButton("Open installation folder")
+
+        log_open.clicked.connect(self._open_log)
+        folder_open.clicked.connect(self._open_folder)
+
+
+        log_buttons.addWidget(log_open)
+        log_buttons.addWidget(folder_open)
+
+        log_pres.addWidget(log_title)
+        log_pres.addWidget(log_text)
+        log_pres.addLayout(log_buttons)
+
+        layout.addRow(title)
+        layout.addRow(path_layout)
+        layout.addRow(test_layout)
+        layout.addRow(log_pres)
 
         self.setLayout(layout)
     
@@ -61,22 +85,26 @@ class QEMUPathPage(QWidget):
         self._test_64(window=False)
     
     def _test_64(self, window=True):
+
+        cmd = []
+
         if self.qemu_folder.text():
-            cmd = self.qemu_folder.text().split()
+            cmd += [f"{self.qemu_folder.text()}/qemu-system-x86_64.exe"]
         else:
-            cmd = ["qemu-system-x86_64.exe"]
+            cmd += ["qemu-system-x86_64.exe"]
         cmd += ["-version"]
 
-        command = subprocess.run(cmd, capture_output=True)
+        print(f"Command: {cmd}")
 
-        if command.returncode != 0:
-            logging.error(command.stderr)
-            logging.error(command.stdout.decode())
-        else:
+        try:
+            command = subprocess.run(cmd, capture_output=True)
             logging.debug(command.stdout.decode())
-        
-        test_window = TestDialog(command.returncode, command.stdout)
-        test_window.exec()
+            test_window = TestDialog(0, command.stdout)
+            test_window.exec()
+        except FileNotFoundError as e:
+            test_window = TestDialog(1, e)
+            logging.error(f"qemu-system-x86_64.exe could not be found on the specified path")
+            test_window.exec()
 
     def _browse_folder(self):
         path= QFileDialog.getExistingDirectory(
@@ -85,6 +113,14 @@ class QEMUPathPage(QWidget):
         )
         if path:
             self.qemu_folder.setText(path)
+
+    def _open_log(self):
+        cmd = ["powershell", "-Command", "./latest.log"]
+        subprocess.Popen(cmd)
+    
+    def _open_folder(self):
+        cmd = ["explorer", "."]
+        subprocess.Popen(cmd)
     
     def get_data(self):
         return {
