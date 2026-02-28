@@ -26,9 +26,9 @@ class CreateVMWizard(QWizard):
         self.vm_manager = VMManager()
 
         self.addPage(PageName(self))
-        self.addPage(PageInstall(self))
         self.addPage(PageCpuMemory(self))
         self.addPage(PageStorage(self))
+        self.addPage(PageInstall(self))
         self.addPage(PageNetwork(self))
         self.addPage(PageDevices(self))
         self.addPage(PageSummary(self))

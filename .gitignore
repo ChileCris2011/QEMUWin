@@ -3,3 +3,4 @@ vms/
 __pycache__/
 
 latest.log
+.vscode/
