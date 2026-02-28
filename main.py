@@ -52,4 +52,4 @@ if __name__ == "__main__":
 
     sys.exit(app.exec())
 
-# TODO: Pantalla embebida, warning window for no vm name
+# TODO: Pantalla embebida
