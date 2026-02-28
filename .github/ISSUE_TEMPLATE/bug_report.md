@@ -27,6 +27,11 @@ If applicable, add screenshots to help explain your problem.
  - OS ver: [e.g. Windows 11 24H2]
  - Version [e.g. 22]
  - QEMU version (if aplies)
-
+ 
 **Additional context**
 Add any other context about the problem here.
+
+**QEMUWin Log**
+Somtimes you will need to upload your QUEMUWin log.
+You can obtain it by going to Settings > QEMU > Open Installation folder.
+   ⬇️ Then, upload latest.log here
