@@ -1,0 +1,41 @@
+name: Build Release
+
+on:
+  push:
+    branches: stable
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+          
+      - name: Build primary executable
+        run: |
+          pyinstaller qemuwin.spec
+          
+      - name: Install Inno Setup
+        run: choco install innosetup
+
+      - name: Build Installer
+        run: |
+          iscc installer.iss
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files Output/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
