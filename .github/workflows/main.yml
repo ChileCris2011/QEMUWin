@@ -2,7 +2,7 @@ name: Build Release
 
 on:
   push:
-      branches: stable
+      tags: "v*"
   workflow_dispatch:
 
 jobs:
@@ -34,9 +34,11 @@ jobs:
         run: |
           iscc installer.iss
 
-      - name: Create release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: Output/*.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: QEMU Manager ${{ github.ref_name }}
+          draft: true
+          prerelease: false
+          files: Output/QEMUWin_Setup.exe
