@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWizardPage, QVBoxLayout, QLabel, QLineEdit, QComboBox
+from PyQt6.QtWidgets import QWizardPage, QVBoxLayout, QLabel, QLineEdit, QComboBox, QMessageBox
 
 class PageName(QWizardPage):
     def __init__(self, parent=None):
@@ -25,6 +25,12 @@ class PageName(QWizardPage):
 
     def validatePage(self):
         name = self.name_line_edit.text()
+        if not name:
+            QMessageBox.warning(
+                self,
+                "VM name",
+                "You must specify a VM name"
+            )
         return bool(name.strip())
 
     def get_data(self):

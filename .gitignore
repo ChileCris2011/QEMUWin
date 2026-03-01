@@ -1,5 +1,8 @@
 virt/
 vms/
+build/
+dist/
+latest.log
+.vscode/
 __pycache__/
-
-app.log
+Output/

@@ -40,10 +40,12 @@ class PageNetwork(QWizardPage):
 
     def get_data(self):
         return {
-            "network":{
-                "type": self.net_type.currentText(),
-                "model": self.net_card.currentText()
-            }
+            "network":[
+                {
+                    "type": self.net_type.currentText(),
+                    "model": self.net_card.currentText()
+                }
+            ]
         }
     
     def _select_change(self):

@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout
-from PySide6.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout
+from PyQt6.QtCore import Qt
 
 class VMItemWidget(QWidget):
     def __init__(self, name, state="stopped", memory="Unknown"):
@@ -29,6 +29,7 @@ class VMItemWidget(QWidget):
     def _state_icon(self, state):
         icons = {
             "stopped": "🔴",
+            "killed": "❌",
             "starting": "🟡",
             "running": "🟢",
             "paused": "🔵",
@@ -38,3 +39,22 @@ class VMItemWidget(QWidget):
 
     def update_state(self, state):
         self.state_label.setText(self._state_icon(state) + " " + state.capitalize())
+
+class DummyItem(QWidget):
+    def __init__(self, name, text):
+        super().__init__()
+
+        self.setObjectName(name)
+        self.setDisabled(True)
+
+        layout = QHBoxLayout()
+
+        layout.addStretch()
+
+        label = QLabel(text)
+
+        layout.addWidget(label)
+
+        layout.addStretch()
+
+        self.setLayout(layout)

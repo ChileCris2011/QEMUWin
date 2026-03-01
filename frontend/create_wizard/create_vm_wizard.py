@@ -20,16 +20,15 @@ class CreateVMWizard(QWizard):
 
         self.setWindowTitle("Create New Virtual Machine")
         self.resize(720, 520)
-        self.setStyleSheet(APP_STYLE)
         self.setWizardStyle(QWizard.WizardStyle.ClassicStyle)
 
         self.vm_config = {}
         self.vm_manager = VMManager()
 
         self.addPage(PageName(self))
-        self.addPage(PageInstall(self))
         self.addPage(PageCpuMemory(self))
         self.addPage(PageStorage(self))
+        self.addPage(PageInstall(self))
         self.addPage(PageNetwork(self))
         self.addPage(PageDevices(self))
         self.addPage(PageSummary(self))

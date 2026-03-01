@@ -12,7 +12,18 @@ class NetworkPage(QWidget):
         self.type.setCurrentText(config.get("type"))
 
         self.model = QComboBox()
-        self.model.addItems(["virtio", "e1000", "rtl8139"])
+        self.model.addItems([
+            "e1000",
+            "igb",
+            "ne2k_pci",
+            "pcnet",
+            "rocker",
+            "rtl8139",
+            "tulip",
+            "usb-net",
+            "virtio-net-pci",
+            "vmxnet3"
+        ])
         self.model.setCurrentText(config.get("model"))
 
         layout.addRow("Mode:", self.type)
@@ -22,8 +33,7 @@ class NetworkPage(QWidget):
 
     def get_data(self):
         return {
+            "network": "network",
             "type": self.type.currentText(),
             "model": self.model.currentText()
         }
-    
-# TODO: Add more net cards

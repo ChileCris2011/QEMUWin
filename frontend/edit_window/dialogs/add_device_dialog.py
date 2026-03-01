@@ -19,7 +19,6 @@ class AddDeviceDialog(QDialog):
 
         self.config = {}
 
-        central = QWidget()
         main_layout = QVBoxLayout()
 
         splitter = QSplitter(Qt.Orientation.Horizontal)

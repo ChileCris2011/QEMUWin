@@ -1,8 +1,8 @@
-from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QStyle,
+from PyQt6.QtWidgets import (
+    QMainWindow, QWidget, QVBoxLayout, QApplication,
     QPushButton, QHBoxLayout, QLabel, QMessageBox
 )
-from PySide6.QtCore import Signal
+from PyQt6.QtCore import pyqtSignal
 
 from frontend.create_wizard.create_vm_wizard import CreateVMWizard
 from frontend.edit_window.edit_vm_window import EditVMWindow
@@ -10,26 +10,32 @@ from frontend.edit_window.edit_vm_window import EditVMWindow
 from backend.config_manager import ConfigManager
 
 from gui.vm_list_widget import VMListWidget
-from gui.styles import APP_STYLE
+from gui.theme_manager import IconManager, ThemeManager
+from gui.settings import SettingsDialog
 
 import logging
 
 class MainWindow(QMainWindow):
 
-    vm_state_changed = Signal(str, object)
+    vm_state_changed = pyqtSignal(str, object)
 
-    def __init__(self, manager):
+    def __init__(self, manager, app=QApplication):
         super().__init__()
         self.manager = manager
+
+        self.app = app
+
+        self.icon_manager = IconManager(mode="dark", app=self.app)
+        self.theme_manager = ThemeManager(self.app)
 
         self.setWindowTitle("QEMU Manager")
         self.resize(800, 500)
 
         self._build_ui()
-        self.setStyleSheet(APP_STYLE)
 
         self.manager.on_vm_state_changed = self._backend_state_changed
         self.vm_state_changed.connect(self._update_vm_ui)
+        self.theme_manager.themeChanged.connect(self._build_ui)
 
     def _build_ui(self):
         central = QWidget()
@@ -49,20 +55,15 @@ class MainWindow(QMainWindow):
         self.btn_kill = QPushButton("Kill")
         self.btn_edit = QPushButton("Edit")
         self.btn_delete = QPushButton("Delete")
+        self.btn_config = QPushButton("Settings")
 
-        new_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder)
-        start_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay)
-        stop_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaStop)
-        kill_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserStop)
-        edit_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon)
-        delete_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)
-
-        self.btn_new.setIcon(new_icon)
-        self.btn_start.setIcon(start_icon)
-        self.btn_stop.setIcon(stop_icon)
-        self.btn_kill.setIcon(kill_icon)
-        self.btn_edit.setIcon(edit_icon)
-        self.btn_delete.setIcon(delete_icon)
+        self.btn_new.setIcon(self.icon_manager.get_icon("new_window"))
+        self.btn_start.setIcon(self.icon_manager.get_icon("play_arrow"))
+        self.btn_stop.setIcon(self.icon_manager.get_icon("stop"))
+        self.btn_kill.setIcon(self.icon_manager.get_icon("close"))
+        self.btn_edit.setIcon(self.icon_manager.get_icon("edit"))
+        self.btn_delete.setIcon(self.icon_manager.get_icon("delete"))
+        self.btn_config.setIcon(self.icon_manager.get_icon("settings"))
 
         toolbar_layout.addWidget(self.btn_new)
         toolbar_layout.addWidget(self.btn_start)
@@ -71,6 +72,8 @@ class MainWindow(QMainWindow):
         toolbar_layout.addWidget(self.btn_edit)
         toolbar_layout.addWidget(self.btn_delete)
         toolbar_layout.addStretch()
+        toolbar_layout.addWidget(self.btn_config)
+
 
         main_layout.addLayout(toolbar_layout)
 
@@ -85,9 +88,10 @@ class MainWindow(QMainWindow):
         self.btn_new.clicked.connect(self._new_vm)
         self.btn_start.clicked.connect(self._start)
         self.btn_stop.clicked.connect(self._stop)
-        self.btn_stop.clicked.connect(self._kill)
+        self.btn_kill.clicked.connect(self._kill)
         self.btn_edit.clicked.connect(self._edit_vm)
         self.btn_delete.clicked.connect(self._delete_vm)
+        self.btn_config.clicked.connect(self._open_config)
 
         self._update_buttons()
 
@@ -114,8 +118,16 @@ class MainWindow(QMainWindow):
         name = self.vm_list.get_selected()
         if name:
             if self.manager.get_state(name).value != "stopped":
-                logging.info(f"Quitting {name} process")
-                self.manager.kill_vm(name)
+                reply = QMessageBox.warning(
+                    self,
+                    "Kill VM",
+                    f"Are you sure you want to force {name} to shut down?\n\nThis can cause data corruption. Only use this if the machine becomes unresponsive.",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+
+                if reply == QMessageBox.StandardButton.Yes:
+                    logging.info(f"Forcing {name} to shut down")
+                    self.manager.kill_vm(name)
             else:
                 logging.warning(f"Tried to quit VM {name}, but it is not started")
         else:
@@ -155,15 +167,20 @@ class MainWindow(QMainWindow):
             self,
             "Delete VM",
             f"Are you sure you want to delete '{name}'?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
 
-        if reply == QMessageBox.Yes:
+        if reply == QMessageBox.StandardButton.Yes:
             try:
                 self.manager.delete_vm(name)
                 self.vm_list.refresh()
             except Exception as e:
                 QMessageBox.critical(self, "Error", str(e))
+
+    def _open_config(self):
+        settings_dialog = SettingsDialog(self.icon_manager, self.theme_manager)
+        if settings_dialog.exec():
+            pass
 
     def _backend_state_changed(self, name, state):
         self.vm_state_changed.emit(name, state)

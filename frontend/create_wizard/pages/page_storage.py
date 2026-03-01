@@ -41,7 +41,7 @@ class PageStorage(QWizardPage):
         if dialog.exec():
             data = dialog.get_data()
 
-            if not data["path"]:
+            if not data["path"] or not data["name"]:
                 QMessageBox.warning(self, "Error", "Disk path is required.")
                 return
 
@@ -56,7 +56,7 @@ class PageStorage(QWizardPage):
             data = dialog.get_data()
 
             if not data["path"]:
-                QMessageBox.warning(self, "Error", "Disk path is required.")
+                QMessageBox.warning(self, "Error", "Disk path and name is required.")
                 return
 
             self.disks.append(data)

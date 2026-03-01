@@ -17,6 +17,7 @@ from frontend.edit_window.pages.network_page import NetworkPage
 from frontend.edit_window.pages.audio_page import AudioPage
 from frontend.edit_window.pages.video_page import VideoPage
 from frontend.edit_window.pages.usb_page import UsbPage
+from frontend.edit_window.pages.args_page import ArgsPage
 
 # Add device dialog
 from frontend.edit_window.dialogs.add_device_dialog import AddDeviceDialog
@@ -28,7 +29,7 @@ class EditVMWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle(f"Edit VM - {vm_config.get('name', '')}")
-        self.resize(1000, 650)
+        self.resize(800, 550)
 
         self.original_config = vm_config
         self.vm_config = copy.deepcopy(vm_config)
@@ -130,6 +131,9 @@ class EditVMWindow(QMainWindow):
             self.add_page("USB Controller", UsbPage(
                 {"model": self.vm_config.get("usb")}
             ))
+        
+        # Qargs
+        self.add_page("QEMU args", ArgsPage(self.vm_config))
 
     def add_page(self, name, widget):
         item = QListWidgetItem(name)
@@ -174,6 +178,7 @@ class EditVMWindow(QMainWindow):
         storage = []
         media = []
         network = []
+        args = []
 
         for page in self.pages:
             if hasattr(page, "get_data"):
@@ -185,16 +190,26 @@ class EditVMWindow(QMainWindow):
                 elif "memory" in data:
                     new_config["memory"] = data["memory"]
 
-                elif "path" in data and "format" in data:
+                elif "disk" in data:
+                    data.pop("disk")
                     storage.append(data)
 
-                elif "path" in data and "bus" in data and "format" not in data:
+                elif "cdrom" in data:
+                    data.pop("cdrom")
                     media.append({
                         "type": "CD-ROM",
                         **data
                     })
 
-                elif "type" in data and "model" in data:
+                elif "floppy" in data:
+                    data.pop("floppy")
+                    media.append({
+                        "type": "Floppy",
+                        **data
+                    })
+
+                elif "network" in data:
+                    data.pop("network")
                     network.append(data)
 
                 elif "audio" in data:
@@ -209,9 +224,17 @@ class EditVMWindow(QMainWindow):
                 elif "name" in data:
                     new_config.update(data)
 
+                elif "args" in data:
+                    for arg in data["args"]:
+                        args.append(arg)
+
+
         new_config["storage"] = storage
         new_config["media"] = media
         new_config["network"] = network
+        new_config["qargs"] = args
+
+        print(f"New config: {new_config["qargs"]}\n\n")
 
         return new_config
 

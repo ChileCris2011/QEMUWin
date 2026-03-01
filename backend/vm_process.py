@@ -14,6 +14,8 @@ class VMProcess:
         self.state = VMState.STOPPED
         self.qmp = None
 
+        self.killed = False
+
         self.on_state_changed = None
         self.on_stopped = None
 
@@ -29,7 +31,7 @@ class VMProcess:
         self._set_state(VMState.STARTING)
 
         cmd = self._build_command()
-        self.process = subprocess.Popen(cmd)
+        self.process = subprocess.Popen(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
 
         threading.Thread(target=self._monitor, daemon=True).start()
 
@@ -98,8 +100,8 @@ class VMProcess:
         
         #print(cmd)
 
-        if self.config.get("custom_flags"):
-            cmd += self.config.get("custom_flags")
+        if self.config.get("qargs"):
+            cmd += self.config.get("qargs")
 
         #print(cmd)
 
@@ -112,7 +114,8 @@ class VMProcess:
             result = subprocess.run(
                 ["qemu-img", "info", path],
                 capture_output=True,
-                text=True
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
             )
 
             for line in result.stdout.splitlines():
@@ -125,9 +128,15 @@ class VMProcess:
         return "raw"
 
     def _monitor(self):
-        self.process.wait()
-        self._set_state(VMState.STOPPED)
-
+        code = self.process.wait()
+        if code == 0:
+            if self.killed:
+                self._set_state(VMState.KILLED)
+                self.killed = False
+            else:
+                self._set_state(VMState.STOPPED)
+        else:
+            self._set_state(VMState.ERROR)
         if self.on_stopped:
             self.on_stopped(self.name)
 
@@ -141,5 +150,6 @@ class VMProcess:
         if self.qmp:
             try:
                 self.qmp.quit()
+                self.killed = True
             except:
                 raise RuntimeError("Failed to end VM process")
