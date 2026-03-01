@@ -59,6 +59,7 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,
+    icon="resources/icons/QEMUWin.ico"
 )
 
 coll = COLLECT(
