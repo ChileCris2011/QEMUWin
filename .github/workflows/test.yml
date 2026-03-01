@@ -2,6 +2,7 @@ name: Build Latest
 on:
   push:
     branches: latest
+  workflow_dispatch: 
 
 permissions:
   contents: write
