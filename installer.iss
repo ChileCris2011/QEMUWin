@@ -33,7 +33,7 @@ DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
 OutputBaseFilename=qemuwin_setup
-SetupIconFile=C:\Users\Usuario\Documents\QEMUWin\resources\icons\QEMUWin.ico
+SetupIconFile=.\resources\icons\QEMUWin.ico
 SolidCompression=yes
 WizardStyle=modern
 
@@ -44,8 +44,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\Usuario\Documents\QEMUWin\dist\QEMUWin\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\Usuario\Documents\QEMUWin\dist\QEMUWin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: ".\dist\QEMUWin{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".\dist\QEMUWin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
