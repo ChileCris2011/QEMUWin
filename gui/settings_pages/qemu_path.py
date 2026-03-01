@@ -97,7 +97,7 @@ class QEMUPathPage(QWidget):
         print(f"Command: {cmd}")
 
         try:
-            command = subprocess.run(cmd, capture_output=True)
+            command = subprocess.run(cmd, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
             logging.debug(command.stdout.decode())
             test_window = TestDialog(0, command.stdout)
             test_window.exec()
@@ -116,11 +116,11 @@ class QEMUPathPage(QWidget):
 
     def _open_log(self):
         cmd = ["powershell", "-Command", "./latest.log"]
-        subprocess.Popen(cmd)
+        subprocess.Popen(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
     
     def _open_folder(self):
         cmd = ["explorer", "."]
-        subprocess.Popen(cmd)
+        subprocess.Popen(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
     
     def get_data(self):
         return {

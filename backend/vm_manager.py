@@ -130,7 +130,7 @@ class VMManager:
             f"{size}G"
         ]
 
-        command = subprocess.run(cmd, capture_output=True)
+        command = subprocess.run(cmd, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
 
         if command.returncode != 0:
             logging.error(command.stderr)

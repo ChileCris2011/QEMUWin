@@ -1,0 +1,19 @@
+<RCC>
+  <qresource prefix="/">
+    <file>resources/icons/QEMUWin.ico</file>
+    <file>resources/icons/dark/close.svg</file>
+    <file>resources/icons/dark/delete.svg</file>
+    <file>resources/icons/dark/edit.svg</file>
+    <file>resources/icons/dark/new_window.svg</file>
+    <file>resources/icons/dark/play_arrow.svg</file>
+    <file>resources/icons/dark/settings.svg</file>
+    <file>resources/icons/dark/stop.svg</file>
+    <file>resources/icons/light/close.svg</file>
+    <file>resources/icons/light/delete.svg</file>
+    <file>resources/icons/light/edit.svg</file>
+    <file>resources/icons/light/new_window.svg</file>
+    <file>resources/icons/light/play_arrow.svg</file>
+    <file>resources/icons/light/settings.svg</file>
+    <file>resources/icons/light/stop.svg</file>
+  </qresource>
+</RCC>

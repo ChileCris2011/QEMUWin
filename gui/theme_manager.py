@@ -3,7 +3,7 @@ from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtGui import QGuiApplication, QPalette, QColor, QPixmap, QPainter, QIcon
 from PyQt6.QtWidgets import QApplication
 
-import os, copy
+import os, resources_rc
 
 class ThemeMode:
     AUTO = "auto"
@@ -199,23 +199,9 @@ class IconManager:
         return QColor(40, 40, 40)  # casi negro
 
     def _load_svg_icon(self, name: str, size: int, theme: str) -> QIcon:
-        file_path = os.path.join(f"{self.icon_path}/{theme}", f"{name}.svg")
-
-        if not os.path.exists(file_path):
-            return QIcon()
-
-        renderer = QSvgRenderer(file_path)
-
-        pixmap = QPixmap(QSize(size, size))
-        pixmap.fill(Qt.GlobalColor.transparent)
-
-        painter = QPainter(pixmap)
-        renderer.render(painter)
-        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
-        painter.fillRect(pixmap.rect(), self._icon_color())
-        painter.end()
-
-        return QIcon(pixmap)
+        return QIcon(f":resources/icons/{theme}/{name}.svg")
+    
+    # Didn't want to change all. That'll be for v2
     
     def _manage_change(self):
         self.set_mode(self.theme_manager.get_mode())

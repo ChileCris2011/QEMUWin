@@ -1,11 +1,14 @@
 import sys, threading, logging
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QSettings
+from PyQt6.QtGui import QIcon
 from backend.vm_manager import VMManager
 from gui.main_window import MainWindow
 from gui.theme_manager import ThemeManager
 
 import backend.error_handling as error_handler
+
+import resources_rc
 
 open("./latest.log", "w", encoding="utf-8")
 
@@ -27,6 +30,8 @@ if __name__ == "__main__":
     logging.info("----------------------------")
 
     app = QApplication(sys.argv)
+    
+    app.setWindowIcon(QIcon(":resources/icons/QEMUWin.ico"))
 
     theme_manager = ThemeManager(app)
     theme_manager.apply()

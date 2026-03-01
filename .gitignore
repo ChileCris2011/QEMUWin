@@ -1,6 +1,8 @@
 virt/
 vms/
-__pycache__/
-
+build/
+dist/
 latest.log
 .vscode/
+__pycache__/
+Output/

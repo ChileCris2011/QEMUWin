@@ -31,7 +31,7 @@ class VMProcess:
         self._set_state(VMState.STARTING)
 
         cmd = self._build_command()
-        self.process = subprocess.Popen(cmd)
+        self.process = subprocess.Popen(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
 
         threading.Thread(target=self._monitor, daemon=True).start()
 
@@ -114,7 +114,8 @@ class VMProcess:
             result = subprocess.run(
                 ["qemu-img", "info", path],
                 capture_output=True,
-                text=True
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
             )
 
             for line in result.stdout.splitlines():
