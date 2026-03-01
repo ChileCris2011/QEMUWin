@@ -32,7 +32,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
-OutputBaseFilename=qemuwin_setup
+OutputBaseFilename=QEMUWin_Setup
 SolidCompression=yes
 WizardStyle=modern
 
