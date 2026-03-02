@@ -42,6 +42,8 @@ if __name__ == "__main__":
     window = MainWindow(manager, app)
     window.show()
 
+    logging.debug("Showing window")
+
     settings = QSettings("QEMUWin", "QEMUWin")
     if settings.value("QEMUWin", 0) == 0:
         message = QMessageBox.question(

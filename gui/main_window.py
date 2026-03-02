@@ -37,6 +37,9 @@ class MainWindow(QMainWindow):
         self.vm_state_changed.connect(self._update_vm_ui)
         self.theme_manager.themeChanged.connect(self._build_ui)
 
+        self.manager.restore_vms()
+        logging.info("VMs restored")
+
     def _build_ui(self):
         central = QWidget()
         main_layout = QVBoxLayout()
@@ -189,6 +192,7 @@ class MainWindow(QMainWindow):
 
     def _update_vm_ui(self, name, state):
         self.vm_list.update_vm_state(name, state.value)
+        print("Triggered list change")
 
     def _update_buttons(self):
         name = self.vm_list.get_selected()

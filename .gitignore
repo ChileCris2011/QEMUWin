@@ -6,3 +6,4 @@ latest.log
 .vscode/
 __pycache__/
 Output/
+meta/*

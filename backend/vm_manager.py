@@ -1,7 +1,7 @@
 from backend.config_manager import ConfigManager
 from backend.vm_process import VMProcess
 from backend.vm_state import VMState
-from backend.port_manager import QMPPortManager
+from backend.port_manager import PortManager
 
 import subprocess, os, logging
 
@@ -10,7 +10,7 @@ class VMManager:
     def __init__(self):
         self.config = ConfigManager()
         self.processes = {}
-        self.port_manager = QMPPortManager()
+        self.port_manager = PortManager()
 
         self.on_vm_state_changed = None
 
@@ -48,6 +48,22 @@ class VMManager:
 
         self.config.delete_vm(name)
 
+    def restore_vms(self):
+        vms = self.list_vms()
+        for name in vms:
+            logging.info(f"Trying to restore VM {name}")
+            config = self.config.load_vm(name)
+            vm = VMProcess(name, config, None, None)
+            logging.info("...")
+            result = vm.restore_vm()
+            if result:
+                vm.on_state_changed = self._vm_state_changed
+                vm.on_stopped = self._vm_stopped
+                self.processes[name] = vm
+                logging.info(f"Restored VM {name}")
+
+                vm.on_state_changed(result.get("name"), VMState(result.get("state")))
+
     def start_vm(self, name):
         if name in self.processes:
             return
@@ -56,9 +72,16 @@ class VMManager:
         if config.get("qmp_port"):
             qmp_port = config.get("qmp_port")
         else:
-            qmp_port = self.port_manager.get_free_port()
+            qmp_port = self.port_manager.get_free_port(4444)
 
-        vm = VMProcess(name, config, qmp_port)
+        vnc_port = None
+        if config.get("vnc_port"):
+            if config.get("vnc_port") == "auto":
+                vnc_port = self.port_manager.get_free_port(5900)
+            else:
+                vnc_port = config.get("vnc_port")
+
+        vm = VMProcess(name, config, qmp_port, vnc_port)
         vm.on_state_changed = self._vm_state_changed
         vm.on_stopped = self._vm_stopped
 
