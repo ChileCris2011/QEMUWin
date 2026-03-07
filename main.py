@@ -26,7 +26,7 @@ if __name__ == "__main__":
     threading.excepthook = error_handler.thread_exception_hook
     sys.excepthook = error_handler.global_exception_hook
     logging.info("----------------------------")
-    logging.info("-------- QEMUWin V1 --------")
+    logging.info("------- QEMUWin v1.2 -------")
     logging.info("----------------------------")
 
     app = QApplication(sys.argv)
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     theme_manager.apply()
     theme_manager.themeChanged.connect(rebuild_ui)
 
-    manager = VMManager()
+    manager = VMManager(app)
 
     window = MainWindow(manager, app)
     window.show()
@@ -59,4 +59,4 @@ if __name__ == "__main__":
 
     sys.exit(app.exec())
 
-# TODO: Pantalla embebida
+# TODO: Audio handler (VNC doesn't support audio), handle VNC resize, finish vncviewer ui (non-working buttons)

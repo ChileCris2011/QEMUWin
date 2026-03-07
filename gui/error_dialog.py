@@ -5,8 +5,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import QSize
 
 class ErrorDialog(QDialog):
-    def __init__(self, message, details, parent=None):
-        super().__init__(parent)
+    def __init__(self, message, details):
+        super().__init__()
         self.setWindowTitle("An error has ocurred")
         self.resize(200, 150)
 

@@ -175,7 +175,7 @@ class IconManager:
 
     def get_icon(self, name: str, size: int = 40) -> QIcon:
         """
-        Obtiene un QIcon recoloreado dinámicamente.
+        Obtiene un QIcon dependiendo del tema actual.
         """
         theme = self.theme_manager.get_mode()
 
@@ -184,7 +184,7 @@ class IconManager:
         if key in self._cache:
             return self._cache[key]
 
-        icon = self._load_svg_icon(name, size, theme)
+        icon = QIcon(f":{self.icon_path}/{theme}/{name}.svg")
         self._cache[key] = icon
         return icon
 
@@ -192,16 +192,5 @@ class IconManager:
     # Internals
     # -------------------------
 
-    def _icon_color(self):
-        mode = self.theme_manager.get_mode()
-        if mode == "dark":
-            return QColor(230, 230, 230)  # casi blanco
-        return QColor(40, 40, 40)  # casi negro
-
-    def _load_svg_icon(self, name: str, size: int, theme: str) -> QIcon:
-        return QIcon(f":resources/icons/{theme}/{name}.svg")
-    
-    # Didn't want to change all. That'll be for v2
-    
     def _manage_change(self):
         self.set_mode(self.theme_manager.get_mode())

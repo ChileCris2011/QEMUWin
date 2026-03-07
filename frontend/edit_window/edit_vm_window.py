@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QStackedWidget,
     QPushButton, QSplitter, QListWidgetItem,
-    QMessageBox
+    QMessageBox, QApplication
 )
 from PyQt6.QtCore import Qt
 
@@ -25,7 +25,7 @@ from frontend.edit_window.dialogs.add_device_dialog import AddDeviceDialog
 import copy
 
 class EditVMWindow(QMainWindow):
-    def __init__(self, vm_config, vm_list):
+    def __init__(self, vm_config, vm_list,app =QApplication):
         super().__init__()
 
         self.setWindowTitle(f"Edit VM - {vm_config.get('name', '')}")
@@ -35,6 +35,8 @@ class EditVMWindow(QMainWindow):
         self.vm_config = copy.deepcopy(vm_config)
 
         self.vm_list = vm_list
+
+        self.app = app
 
         self.pages = []
 
@@ -241,7 +243,7 @@ class EditVMWindow(QMainWindow):
     def apply_changes(self):
         from backend.vm_manager import VMManager
 
-        manager = VMManager()
+        manager = VMManager(self.app)
 
         self.vm_config = self.collect_all_data()
 

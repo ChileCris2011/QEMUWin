@@ -3,16 +3,22 @@ from backend.vm_process import VMProcess
 from backend.vm_state import VMState
 from backend.port_manager import PortManager
 
+from frontend.vnc_viewer.vnc_window import VNCWindow
+
 import subprocess, os, logging
 
 
 class VMManager:
-    def __init__(self):
+    def __init__(self, app):
         self.config = ConfigManager()
         self.processes = {}
         self.port_manager = PortManager()
 
+        self.app = app
+        self.vnc_window = None
+
         self.on_vm_state_changed = None
+        self.vm_stopped = None
 
     def list_vms(self):
         return self.config.list_vms()
@@ -88,6 +94,11 @@ class VMManager:
         self.processes[name] = vm
         vm.start()
 
+        return {
+            "config": config,
+            "process": vm
+        }
+
     def stop_vm(self, name):
         if name in self.processes:
             self.processes[name].stop()
@@ -105,6 +116,9 @@ class VMManager:
             port = self.processes[name].qmp_port
             self.port_manager.release_port(port)
             del self.processes[name]
+        
+        if self.vm_stopped:
+            self.vm_stopped(name)
 
     def get_state(self, name):
         if name in self.processes:

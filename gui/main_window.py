@@ -6,6 +6,7 @@ from PyQt6.QtCore import pyqtSignal
 
 from frontend.create_wizard.create_vm_wizard import CreateVMWizard
 from frontend.edit_window.edit_vm_window import EditVMWindow
+from frontend.vnc_viewer.vnc_window import VNCWindow
 
 from backend.config_manager import ConfigManager
 
@@ -25,6 +26,9 @@ class MainWindow(QMainWindow):
 
         self.app = app
 
+        self.process = None
+        self.vnc_window = None
+
         self.icon_manager = IconManager(mode="dark", app=self.app)
         self.theme_manager = ThemeManager(self.app)
 
@@ -34,6 +38,7 @@ class MainWindow(QMainWindow):
         self._build_ui()
 
         self.manager.on_vm_state_changed = self._backend_state_changed
+        self.manager.vm_stopped = self._handle_stop
         self.vm_state_changed.connect(self._update_vm_ui)
         self.theme_manager.themeChanged.connect(self._build_ui)
 
@@ -84,6 +89,7 @@ class MainWindow(QMainWindow):
         self.vm_list = VMListWidget(self.manager)
         main_layout.addWidget(self.vm_list)
         self.vm_list.itemSelectionChanged.connect(self._update_buttons)
+        self.vm_list.itemDoubleClicked.connect(self._manage_double)
 
         central.setLayout(main_layout)
         self.setCentralWidget(central)
@@ -101,7 +107,7 @@ class MainWindow(QMainWindow):
     def _start(self):
         name = self.vm_list.get_selected()
         if name:
-            self.manager.start_vm(name)
+            self.process = self.manager.start_vm(name)
             logging.info(f"Starting {name}")
         else:
             logging.warning("Tried to start a VM, but no VM was selected")
@@ -137,7 +143,7 @@ class MainWindow(QMainWindow):
             logging.warning("Tried to quit a VM but no VM was selected")
 
     def _new_vm(self):
-        wizard = CreateVMWizard()
+        wizard = CreateVMWizard(app = self.app)
         if wizard.exec():
             self.vm_list.refresh()
 
@@ -212,3 +218,19 @@ class MainWindow(QMainWindow):
         self.btn_kill.setDisabled(state.value != "running")
         self.btn_edit.setDisabled(state.value != "stopped")
         self.btn_delete.setDisabled(state.value != "stopped")
+
+    def _manage_double(self):
+        if self.vnc_window:
+            self.vnc_window.close()
+            self.vnc_window = None
+
+        if not self.process:
+            self._start()
+
+        self.vnc_window = VNCWindow(self.process["config"], self.process["process"], self.app)
+        self.vnc_window.show()
+    
+    def _handle_stop(self, name):
+        if name == self.process["config"]["name"]:
+            self.process = None
+            logging.debug(f"Removed VM {name} VNC process")
