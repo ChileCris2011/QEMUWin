@@ -105,14 +105,14 @@ class VMProcess:
                 cmd += ["-drive"]
                 if medias.get("type") == "CD-ROM":
                     if medias.get("path") not in empty_text:
-                        cmd += [f"media=cdrom,file={medias.get("path")},if=ide"]
+                        cmd += [f"media=cdrom,file={medias.get("path")},if=ide,id=cdrom{medias.get("id")}"]
                     else:
-                        cmd += ["media=cdrom,if=ide"]
+                        cmd += [f"media=cdrom,if=ide,id=cdrom{medias.get("id")}"]
                 elif medias.get("type") == "Floppy":
                     if medias.get("path") not in empty_text:
-                        cmd += [f"file=\"{medias.get("path")}\",if=floppy"]
+                        cmd += [f"file=\"{medias.get("path")}\",if=floppy,id=floppy{medias.get("id")}"]
                     else:
-                        cmd += ["if=floppy"]
+                        cmd += [f"if=floppy,id=floppy{medias.get("id")}"]
 
         #print(cmd)
 

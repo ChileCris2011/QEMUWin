@@ -47,6 +47,7 @@ class EditVMWindow(QMainWindow):
 
         # Left panel
         self.device_list = QListWidget()
+        self.device_list.setSpacing(8)
         self.device_list.currentRowChanged.connect(self.change_page)
 
         # Right panel
@@ -96,20 +97,26 @@ class EditVMWindow(QMainWindow):
                 self.add_page(f"Disk {i+1}", DiskPage(disk))
 
         # CDROM
+
+        self.cdrom_ids = []
+
         if self.vm_config.get("media"):
-            num = 0
-            for i, media in enumerate(self.vm_config.get("media")):
+            for media in self.vm_config.get("media"):
                 if media.get("type") == "CD-ROM":
-                    num += 1
-                    self.add_page(f"CD-ROM {num}", CdromPage(media))
+                    cdid = media.get("id")
+                    self.add_page(f"CD-ROM {cdid}", CdromPage(media))
+                    self.cdrom_ids.append(cdid)
         
         # Floppy
+
+        self.floppy_ids = []
+
         if self.vm_config.get("media"):
-            num = 0
-            for i, media in enumerate(self.vm_config.get("media")):
+            for media in self.vm_config.get("media"):
                 if media.get("type") == "Floppy":
-                    num += 1
-                    self.add_page(f"Floppy {num}", FloppyPage(media))
+                    fpid = media.get("id")
+                    self.add_page(f"Floppy {fpid}", FloppyPage(media))
+                    self.floppy_ids.append(fpid)
 
         # Network
         if self.vm_config.get("network"):
@@ -163,11 +170,34 @@ class EditVMWindow(QMainWindow):
                 case 1:
                     info = device.get("info")
                     if info.get("type") == "CD-ROM":
+                        info["id"] = self.get_id(self.cdrom_ids)
                         page = CdromPage(info)
                         self.add_page("New CD-ROM", page)
                     else:
-                        page = FloppyPage(info)
-                        self.add_page("New Floppy", page)
+                        if len(self.floppy_ids) < 2:
+                            info["id"] = self.get_id(self.floppy_ids)
+                            page = FloppyPage(info)
+                            self.add_page("New Floppy", page)
+                        else:
+                            raise RuntimeError("You cannot add more than 2 floppys")
+    
+    def get_id(self, list):
+        if list:
+            nums = set(list)
+            i = 1
+            while True:
+                global tid
+                if i not in nums:
+                    tid = i
+                    break
+                i += 1
+
+            if tid <= max(list):
+                return tid
+            else:
+                return max(list) + 1
+        
+        return 0
 
     # --------------------------------------------------
     # Collect + Apply
@@ -236,7 +266,7 @@ class EditVMWindow(QMainWindow):
         new_config["network"] = network
         new_config["qargs"] = args
 
-        print(f"New config: {new_config["qargs"]}\n\n")
+        print(f"New config: {new_config}\n\n")
 
         return new_config
 

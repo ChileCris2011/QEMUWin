@@ -47,32 +47,33 @@ class VNCWindow(QMainWindow):
 
         # Get all media to assign buttons
 
-        disks = 0
         self.disk_btn = {}
-        floppys = 0
         self.floppy_btn = {}
-
+        
         if config.get("media"):
             print(config.get("media"))
             for media in config.get("media"):
                 print(media["type"])
 
                 if media["type"] == "CD-ROM":
-                    self.disk_btn[disks] = QPushButton()
-                    if disks < 9:
-                        self.disk_btn[disks].setIcon(self.icons.get_icon(f"disk_{disks+1}"))
+                    disk_num = media["id"]
+                    self.disk_btn[disk_num] = QPushButton()
+                    if disk_num < 9:
+                        self.disk_btn[disk_num].setIcon(self.icons.get_icon(f"disk_{disk_num}"))
                     else:
-                        self.disk_btn[disks].setIcon(self.icons.get_icon("disk"))
-                    self.disk_btn[disks].setToolTip(f"CD-ROM {disks+1}")
-                    menu.addWidget(self.disk_btn[disks])
-                    disks += 1
+                        self.disk_btn[disk_num].setIcon(self.icons.get_icon("disk_plus"))
+                    self.disk_btn[disk_num].setToolTip(f"CD-ROM {disk_num}")
+                    menu.addWidget(self.disk_btn[disk_num])
 
                 elif media["type"] == "Floppy":
-                    self.floppy_btn[floppys] = QPushButton()
-                    self.floppy_btn[floppys].setIcon(self.icons.get_icon(f"floppy_{floppys+1}")) # QEMU doesn't accepts more than 2 floppy drives, so no need to verify
-                    self.floppy_btn[floppys].setToolTip(f"Floppy {floppys+1}")
-                    menu.addWidget(self.floppy_btn[floppys])
-                    floppys += 1
+                    flop_num = media["id"]
+                    self.floppy_btn[flop_num] = QPushButton()
+                    self.floppy_btn[flop_num].setIcon(self.icons.get_icon(f"floppy_{flop_num}")) # QEMU doesn't accepts more than 2 floppy drives, so no need to verify
+                    self.floppy_btn[flop_num].setToolTip(f"Floppy {flop_num}")
+                    menu.addWidget(self.floppy_btn[flop_num])
+
+        print(self.disk_btn)
+        print(self.floppy_btn)
 
         menu.addStretch()
 

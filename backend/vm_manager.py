@@ -144,8 +144,22 @@ class VMManager:
             disk.pop("mode", None)
 
             final_storage.append(disk)
+        
+        final_media = []
+        cd = 0
+        floppy = 0
+        for media in config.get("media", []):
+            if media["type"] == "CD-ROM":
+                media["id"] = cd
+                cd += 1
+            elif media["type"] == "Floppy":
+                media["id"] = floppy
+                floppy += 1
+                
+            final_media.append(media)
 
         config["storage"] = final_storage
+        config["media"] = final_media
         return config
 
 
