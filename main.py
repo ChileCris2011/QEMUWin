@@ -8,8 +8,6 @@ from gui.theme_manager import ThemeManager
 
 import backend.error_handling as error_handler
 
-import resources_rc
-
 open("./latest.log", "w", encoding="utf-8")
 
 logging.basicConfig(
@@ -59,4 +57,4 @@ if __name__ == "__main__":
 
     sys.exit(app.exec())
 
-# TODO: Audio handler (VNC doesn't support audio), handle VNC resize, finish vncviewer ui (non-working buttons)
+# TODO: Audio handler (VNC doesn't support audio), finish vncviewer ui (non-working buttons)

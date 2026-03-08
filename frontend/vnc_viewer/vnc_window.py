@@ -1,23 +1,34 @@
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QApplication, QScrollArea, QSizePolicy
-from PyQt6.QtCore import pyqtSignal, QSize
-from qvncwidget6.qvncwidget6 import QVNCWidget
+from PyQt6.QtWidgets import (
+    QMainWindow, QWidget,
+    QVBoxLayout, QHBoxLayout,
+    QPushButton, QApplication,
+    QScrollArea, QMenu
+)
+from PyQt6.QtGui import QAction
+
+from PyQt6.QtCore import pyqtSignal, QSize, Qt
+from qvncwidget6 import QVNCWidget
 
 from gui.theme_manager import IconManager
 
-import sys
+import sys, threading
 
 class VNCWindow(QMainWindow):
-    resize = pyqtSignal(QSize)
     def __init__(self, config, process, app=QApplication):
         super().__init__()
+
         self.setWindowTitle(f"{config["name"]} - VNC Viewer")
+        self.resize(800, 600)
 
         self.app = app
+
+        self.oppened = True
+        self.resize_window = False
 
         self.icons = IconManager(app=self.app)
 
         central = QWidget()
-        main_layout = QVBoxLayout()
+        main_layout = QVBoxLayout(central)
 
         menu = QHBoxLayout()
 
@@ -65,30 +76,61 @@ class VNCWindow(QMainWindow):
 
         menu.addStretch()
 
+        size_options = QPushButton()
+        size_options.setIcon(self.icons.get_icon("size"))
+        size_options.setToolTip("Resize options")
+
+        size_menu = QMenu()
+
+        self.follow_window = QAction("    Resize to Window", self)
+        self.follow_window.triggered.connect(self._follow_window)
+
+        size_menu.addAction(self.follow_window)
+
+        size_options.setMenu(size_menu)
+
+        menu.addWidget(size_options)
+
         main_layout.addLayout(menu)
 
-        self.viewer_container= QScrollArea()
+        self.viewer_container = QScrollArea()
+        self.viewer_container.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.viewer_widget = QWidget()
+        
+        self.viewer_layout = QHBoxLayout(self.viewer_widget)
         
         self.viewer = QVNCWidget(
-            parent=self,
+            parent=self.viewer_widget,
             host="127.0.0.1", port=config["vnc"],
-            readOnly=True
+            readOnly=True,
+            autoResize=True
         )
-        self.viewer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-        self.viewer_container.setWidget(self.viewer)
+        self.viewer_layout.addWidget(self.viewer)
+
+        self.viewer_container.setWidget(self.viewer_widget)
         self.viewer_container.setWidgetResizable(True)
 
         main_layout.addWidget(self.viewer_container)
 
-        self.viewer.onInitialResize.connect(self.resize)
         self.viewer.start()
 
-        central.setLayout(main_layout)
         self.setCentralWidget(central)
+
+    def _follow_window(self):
+        if self.resize_window:
+            self.resize_window = False
+            self.follow_window.setText("    Resize to window")
+            self.viewer.setMinimumSize(1, 1)
+        else:
+            self.resize_window = True
+            self.follow_window.setText(" ✔  Resize to window")
+            # TODO: Implement change
 
     def closeEvent(self, ev):
         try:
+            self.oppened = False
             self.close()
             self.viewer.stop()
             return super().closeEvent(ev)

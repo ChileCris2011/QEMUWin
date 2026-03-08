@@ -9,6 +9,7 @@
     <file>resources/icons/dark/settings.svg</file>
     <file>resources/icons/dark/stop.svg</file>
     <file>resources/icons/dark/pause.svg</file>
+    <file>resources/icons/dark/size.svg</file>
     <file>resources/icons/dark/disk.svg</file>
     <file>resources/icons/dark/disk_1.svg</file>
     <file>resources/icons/dark/disk_2.svg</file>
@@ -30,6 +31,7 @@
     <file>resources/icons/light/settings.svg</file>
     <file>resources/icons/light/stop.svg</file>
     <file>resources/icons/light/pause.svg</file>
+    <file>resources/icons/light/size.svg</file>
     <file>resources/icons/light/disk.svg</file>
     <file>resources/icons/light/disk_1.svg</file>
     <file>resources/icons/light/disk_2.svg</file>
