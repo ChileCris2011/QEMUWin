@@ -5,7 +5,7 @@ from backend.vm_state import VMState
 from backend.qmp_client import QMPClient
 from backend.vm_meta import VMMetadata
 
-import logging
+import logging, time
 
 class VMProcess:
     def __init__(self, name, config, qmp_port, vnc_port=None):
@@ -213,6 +213,8 @@ class VMProcess:
     def _monitor(self):
         code = self.process.wait()
 
+        time.sleep(2)
+
         if self.state not in (VMState.STOPPING, VMState.STOPPED):
             if code == 0:
                 if self.killed:
@@ -236,7 +238,8 @@ class VMProcess:
     def quit(self):
         if self.qmp:
             try:
-                self.qmp.quit()
                 self.killed = True
+                self.qmp.quit()
             except:
+                self.killed = False
                 raise RuntimeError("Failed to end VM process")

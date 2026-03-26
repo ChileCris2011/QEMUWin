@@ -4,14 +4,12 @@ from PyQt6.QtWidgets import (
     QPushButton, QApplication,
     QScrollArea, QMenu
 )
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QResizeEvent
 
-from PyQt6.QtCore import pyqtSignal, QSize, Qt
+from PyQt6.QtCore import QSize, Qt
 from qvncwidget6 import QVNCWidget
 
 from gui.theme_manager import IconManager
-
-import sys, threading
 
 class VNCWindow(QMainWindow):
     def __init__(self, config, process, app=QApplication):
@@ -23,27 +21,27 @@ class VNCWindow(QMainWindow):
         self.app = app
 
         self.oppened = True
-        self.resize_window = False
+        self.resize_to_window = False
 
         self.icons = IconManager(app=self.app)
 
         central = QWidget()
         main_layout = QVBoxLayout(central)
 
-        menu = QHBoxLayout()
+        self.menu = QHBoxLayout()
 
         btn_pause = QPushButton()
         btn_pause.setIcon(self.icons.get_icon("pause"))
         btn_pause.setToolTip("Pause VM")
-        menu.addWidget(btn_pause)
+        self.menu.addWidget(btn_pause)
 
         btn_resume = QPushButton()
         btn_resume.setIcon(self.icons.get_icon("play_arrow"))
         btn_resume.setToolTip("Resume VM")
         btn_resume.setEnabled(False)
-        menu.addWidget(btn_resume)
+        self.menu.addWidget(btn_resume)
 
-        menu.addSpacing(16)
+        self.menu.addSpacing(16)
 
         # Get all media to assign buttons
 
@@ -63,19 +61,19 @@ class VNCWindow(QMainWindow):
                     else:
                         self.disk_btn[disk_num].setIcon(self.icons.get_icon("disk_plus"))
                     self.disk_btn[disk_num].setToolTip(f"CD-ROM {disk_num}")
-                    menu.addWidget(self.disk_btn[disk_num])
+                    self.menu.addWidget(self.disk_btn[disk_num])
 
                 elif media["type"] == "Floppy":
                     flop_num = media["id"]
                     self.floppy_btn[flop_num] = QPushButton()
                     self.floppy_btn[flop_num].setIcon(self.icons.get_icon(f"floppy_{flop_num}")) # QEMU doesn't accepts more than 2 floppy drives, so no need to verify
                     self.floppy_btn[flop_num].setToolTip(f"Floppy {flop_num}")
-                    menu.addWidget(self.floppy_btn[flop_num])
+                    self.menu.addWidget(self.floppy_btn[flop_num])
 
         print(self.disk_btn)
         print(self.floppy_btn)
 
-        menu.addStretch()
+        self.menu.addStretch()
 
         size_options = QPushButton()
         size_options.setIcon(self.icons.get_icon("size"))
@@ -90,14 +88,16 @@ class VNCWindow(QMainWindow):
 
         size_options.setMenu(size_menu)
 
-        menu.addWidget(size_options)
+        self.menu.addWidget(size_options)
 
-        main_layout.addLayout(menu)
+        main_layout.addLayout(self.menu)
 
         self.viewer_container = QScrollArea()
         self.viewer_container.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.viewer_container.setContentsMargins(0, 0, 0, 0)
 
         self.viewer_widget = QWidget()
+        self.viewer_widget.setContentsMargins(0, 0, 0, 0)
         
         self.viewer_layout = QHBoxLayout(self.viewer_widget)
         
@@ -105,10 +105,12 @@ class VNCWindow(QMainWindow):
             parent=self.viewer_widget,
             host="127.0.0.1", port=config["video"]["port"],
             readOnly=True,
-            autoResize=True
+            autoResize= not self.resize_to_window
         )
+        self.viewer.onResize.connect(self._host_resize_event)
 
         self.viewer_layout.addWidget(self.viewer)
+        self.viewer_layout.setContentsMargins(0, 0, 0, 0)
 
         self.viewer_container.setWidget(self.viewer_widget)
         self.viewer_container.setWidgetResizable(True)
@@ -120,14 +122,22 @@ class VNCWindow(QMainWindow):
         self.setCentralWidget(central)
 
     def _follow_window(self):
-        if self.resize_window:
-            self.resize_window = False
+        if self.resize_to_window:
+            self.resize_to_window = False
+            self.viewer.autoResize = True
             self.follow_window.setText("    Resize to window")
-            self.viewer.setMinimumSize(1, 1)
+            self.viewer.setMinimumSize(self.viewer.sizeHint())
+            self.viewer.setFixedSize(self.viewer.sizeHint())
+            self.viewer_container.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+            self.viewer_container.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         else:
-            self.resize_window = True
+            self.resize_to_window = True
+            self.viewer.autoResize = False
             self.follow_window.setText(" ✔  Resize to window")
-            # TODO: Implement change
+            self.viewer.setMinimumSize(1, 1)
+            self.viewer.setFixedSize(self.viewer_container.size().width() - 8, self.viewer_container.size().height() - 8)
+            self.viewer_container.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            self.viewer_container.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
     def closeEvent(self, ev):
         try:
@@ -137,3 +147,16 @@ class VNCWindow(QMainWindow):
             return super().closeEvent(ev)
         except OSError:
             pass
+    
+    def resizeEvent(self, event: QResizeEvent | None):
+
+        if self.resize_to_window:
+            self.viewer.setFixedSize(self.viewer_container.size().width() - 8, self.viewer_container.size().height() - 8)
+        
+        return super().resizeEvent(event)
+
+    def _host_resize_event(self, size: QSize):
+        if self.resize_to_window:
+            self.viewer.setFixedSize(self.viewer_container.size().width() - 8, self.viewer_container.size().height() - 8)
+        else:
+            self.viewer.setMinimumSize(size)
