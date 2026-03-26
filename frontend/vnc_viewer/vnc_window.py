@@ -103,7 +103,7 @@ class VNCWindow(QMainWindow):
         
         self.viewer = QVNCWidget(
             parent=self.viewer_widget,
-            host="127.0.0.1", port=config["vnc"],
+            host="127.0.0.1", port=config["video"]["port"],
             readOnly=True,
             autoResize=True
         )

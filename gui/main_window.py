@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
 
         self.app = app
 
-        self.process = None
+        self.process = {}
         self.vnc_window = None
 
         self.icon_manager = IconManager(mode="dark", app=self.app)
@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
     def _start(self):
         name = self.vm_list.get_selected()
         if name:
-            self.process = self.manager.start_vm(name)
+            self.process.update({name: self.manager.start_vm(name)})
             logging.info(f"Starting {name}")
         else:
             logging.warning("Tried to start a VM, but no VM was selected")
@@ -220,17 +220,24 @@ class MainWindow(QMainWindow):
         self.btn_delete.setDisabled(state.value != "stopped")
 
     def _manage_double(self):
+        name = self.vm_list.get_selected()
+        
         if self.vnc_window:
             self.vnc_window.close()
             self.vnc_window = None
 
-        if not self.process:
+        if not self.process.get(name, False):
             self._start()
 
-        self.vnc_window = VNCWindow(self.process["config"], self.process["process"], self.app)
+        self.vnc_window = VNCWindow(self.process[name]["config"], self.process[name]["process"], self.app)
+        self.vnc_window.destroyed.connect(self._closed_vnc)
         self.vnc_window.show()
     
+    def _closed_vnc(self):
+        self.vnc_window = None
+
     def _handle_stop(self, name):
-        if name == self.process["config"]["name"]:
-            self.process = None
+        if self.process.pop(name, False):
             logging.debug(f"Removed VM {name} VNC process")
+        else:
+            logging.debug(f"Aparently, {name} doesn't exists...")

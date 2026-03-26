@@ -121,8 +121,8 @@ class VMProcess:
 
         #print(cmd)
 
-        if self.config.get("vnc"):
-            cmd += ["-vnc", f":{self.config["vnc"] - 5900}"]
+        if self.config["video"]["connection"] and self.config["video"]["connection"] == "VNC":
+            cmd += ["-vnc", f":{self.vnc_port - 5900}"]
         
         #print(cmd)
 

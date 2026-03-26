@@ -3,8 +3,6 @@ from backend.vm_process import VMProcess
 from backend.vm_state import VMState
 from backend.port_manager import PortManager
 
-from frontend.vnc_viewer.vnc_window import VNCWindow
-
 import subprocess, os, logging
 
 
@@ -81,11 +79,11 @@ class VMManager:
             qmp_port = self.port_manager.get_free_port(4444)
 
         vnc_port = None
-        if config.get("vnc_port"):
-            if config.get("vnc_port") == "auto":
-                vnc_port = self.port_manager.get_free_port(5900)
-            else:
-                vnc_port = config.get("vnc_port")
+        if config["video"]["port"]:
+            if config["video"]["port"] < 0:
+                config["video"]["port"] = self.port_manager.get_free_port(5900)
+
+            vnc_port = config["video"]["port"]
 
         vm = VMProcess(name, config, qmp_port, vnc_port)
         vm.on_state_changed = self._vm_state_changed

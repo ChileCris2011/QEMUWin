@@ -98,6 +98,9 @@ class ThemeManager(QObject):
         dark_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, QColor(210, 210, 210))
         dark_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, QColor(190, 190, 190))
 
+        dark_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, QColor(222, 222, 222))
+        dark_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, QColor(188, 188, 188))
+
         dark_palette.setColor(QPalette.ColorRole.Highlight, QColor(0, 120, 215, 127))
         dark_palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
 
@@ -124,6 +127,9 @@ class ThemeManager(QObject):
 
         light_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, QColor(100, 100, 100))
         light_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, QColor(190, 190, 190))
+
+        light_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, QColor(100, 100, 100))
+        light_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, QColor(190, 190, 190))
 
         light_palette.setColor(QPalette.ColorRole.Light, QColor(42, 42, 42))
         light_palette.setColor(QPalette.ColorRole.Midlight, QColor(42, 42, 42))

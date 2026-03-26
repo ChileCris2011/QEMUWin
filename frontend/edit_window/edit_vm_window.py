@@ -132,7 +132,7 @@ class EditVMWindow(QMainWindow):
         # Video
         if self.vm_config.get("video"):
             self.add_page("Video", VideoPage(
-                {"model": self.vm_config.get("video")}
+                self.vm_config.get("video")
             ))
 
         # USB
@@ -248,7 +248,10 @@ class EditVMWindow(QMainWindow):
                     new_config["audio"] = data["audio"]
 
                 elif "video" in data:
-                    new_config["video"] = data["video"]
+                    new_config.update({"video": data})
+                
+                elif "connection" in data:
+                    new_config
 
                 elif "usb" in data:
                     new_config["usb"] = data["usb"]

@@ -11,6 +11,7 @@
     <file>resources/icons/dark/pause.svg</file>
     <file>resources/icons/dark/size.svg</file>
     <file>resources/icons/dark/disk.svg</file>
+    <file>resources/icons/dark/disk_0.svg</file>
     <file>resources/icons/dark/disk_1.svg</file>
     <file>resources/icons/dark/disk_2.svg</file>
     <file>resources/icons/dark/disk_3.svg</file>
@@ -21,8 +22,8 @@
     <file>resources/icons/dark/disk_8.svg</file>
     <file>resources/icons/dark/disk_9.svg</file>
     <file>resources/icons/dark/floppy.svg</file>
+    <file>resources/icons/dark/floppy_0.svg</file>
     <file>resources/icons/dark/floppy_1.svg</file>
-    <file>resources/icons/dark/floppy_2.svg</file>
     <file>resources/icons/light/close.svg</file>
     <file>resources/icons/light/delete.svg</file>
     <file>resources/icons/light/edit.svg</file>
@@ -33,6 +34,7 @@
     <file>resources/icons/light/pause.svg</file>
     <file>resources/icons/light/size.svg</file>
     <file>resources/icons/light/disk.svg</file>
+    <file>resources/icons/light/disk_0.svg</file>
     <file>resources/icons/light/disk_1.svg</file>
     <file>resources/icons/light/disk_2.svg</file>
     <file>resources/icons/light/disk_3.svg</file>
@@ -43,7 +45,7 @@
     <file>resources/icons/light/disk_8.svg</file>
     <file>resources/icons/light/disk_9.svg</file>
     <file>resources/icons/light/floppy.svg</file>
+    <file>resources/icons/light/floppy_0.svg</file>
     <file>resources/icons/light/floppy_1.svg</file>
-    <file>resources/icons/light/floppy_2.svg</file>
   </qresource>
 </RCC>

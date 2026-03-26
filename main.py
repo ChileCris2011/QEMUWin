@@ -58,4 +58,3 @@ if __name__ == "__main__":
     sys.exit(app.exec())
 
 # TODO: Audio handler (VNC doesn't support audio), finish vncviewer ui (non-working buttons)
-## TODO: New disk/floppy icons (there's no 0), and ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
