@@ -5,6 +5,13 @@ from PyQt6.QtCore import QTimer
 log_file = open("latest.log", "a", encoding="utf-8")
 faulthandler.enable(log_file)
 
+def exception_hook(exc_type, exc_value, trace):
+    error_text = ''.join(
+        traceback.format_exception(exc_type, exc_value, trace)
+    )
+    logging.exception(f"[Python Exception] {error_text}")
+    show_error_dialog(str(exc_value), error_text)
+
 def thread_exception_hook(args):
     error_text = ''.join(
         traceback.format_exception(args.exc_type, args.exc_value, args.exc_traceback)

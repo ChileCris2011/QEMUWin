@@ -78,18 +78,21 @@ class VMManager:
         else:
             qmp_port = self.port_manager.get_free_port(4444)
 
-        vnc_port = None
-        if config["video"]["port"]:
-            if config["video"]["port"] < 0:
-                config["video"]["port"] = self.port_manager.get_free_port(5900)
-
-            vnc_port = config["video"]["port"]
+        if config["video"]["connection"] == "VNC":
+            vnc_port = config["video"].get("port", 0)
+            if vnc_port < 5900:
+                vnc_port = self.port_manager.get_free_port(5900)
+        else:
+            vnc_port = None
 
         vm = VMProcess(name, config, qmp_port, vnc_port)
         vm.on_state_changed = self._vm_state_changed
         vm.on_stopped = self._vm_stopped
 
         self.processes[name] = vm
+
+        print(self.processes)
+
         vm.start()
 
         return {
@@ -114,6 +117,7 @@ class VMManager:
             port = self.processes[name].qmp_port
             self.port_manager.release_port(port)
             del self.processes[name]
+            print(self.processes)
         
         if self.vm_stopped:
             self.vm_stopped(name)
@@ -127,6 +131,7 @@ class VMManager:
 
         final_storage = []
 
+        dsk = 0
         for disk in config.get("storage", []):
 
             mode = disk.get("mode")
@@ -138,6 +143,8 @@ class VMManager:
                 disk.pop("fmat", None)
                 disk.pop("name")
 
+            disk["id"] = dsk
+            dsk += 1
             # Delete creation tag
             disk.pop("mode", None)
 
@@ -170,16 +177,34 @@ class VMManager:
         # Make folder if it doesn't exist
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
+        from PyQt6.QtCore import QSettings
+
+        setts = QSettings("QEMUWin", "QEMUWin")
+
         # qemu-img create
-        cmd = [
-            "qemu-img",
+
+        cmd = []
+
+        if setts.value("qemu/path", False):
+            cmd += [
+                f"{setts.value("qemu/path")}\\qemu-img"
+            ]
+        else:
+            cmd = [
+                "qemu-img"
+            ]
+
+        cmd += [
             "create",
             "-f", fmt,
             path,
             f"{size}G"
         ]
 
-        command = subprocess.run(cmd, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        try:
+            command = subprocess.run(cmd, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        except FileNotFoundError:
+            logging.error("\'qemu-img\' is not accessible or doesn't exists")
 
         if command.returncode != 0:
             logging.error(command.stderr)

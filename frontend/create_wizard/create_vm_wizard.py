@@ -43,7 +43,7 @@ class CreateVMWizard(QWizard):
         super().accept()
 
     def collect_config(self):
-        config = {}
+        config = {"version": 2}
         for i in range(self.pageIds().__len__()):
             page = self.page(i)
             if hasattr(page, "get_data"):

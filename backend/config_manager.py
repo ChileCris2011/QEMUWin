@@ -1,10 +1,12 @@
 import os
 import json
+import shutil
 
 class ConfigManager:
     def __init__(self, vm_dir="vms"):
         self.vm_dir = vm_dir
         os.makedirs(self.vm_dir, exist_ok=True)
+        os.makedirs(os.path.join(self.vm_dir, "backups"), exist_ok=True)
 
     def list_vms(self):
         return [
@@ -27,3 +29,11 @@ class ConfigManager:
         path = os.path.join(self.vm_dir, f"{name}.json")
         if os.path.exists(path):
             os.remove(path)
+    
+    def backup_vm(self, name):
+        path = os.path.join(self.vm_dir, f"{name}.json")
+        new_path = os.path.join(self.vm_dir, "backups", f"{name}.json")
+        shutil.copy(
+            path,
+            new_path
+        )

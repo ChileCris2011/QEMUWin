@@ -4,8 +4,11 @@ import threading
 from backend.vm_state import VMState
 from backend.qmp_client import QMPClient
 from backend.vm_meta import VMMetadata
+from gui.error_dialog import ErrorDialog
 
-import logging, time
+from PyQt6.QtCore import QSettings
+
+import logging, time, os
 
 class VMProcess:
     def __init__(self, name, config, qmp_port, vnc_port=None):
@@ -36,7 +39,13 @@ class VMProcess:
         self._set_state(VMState.STARTING)
 
         cmd = self._build_command()
-        self.process = subprocess.Popen(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
+        self.process = subprocess.Popen(
+            cmd,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
 
         threading.Thread(target=self._monitor, daemon=True).start()
 
@@ -66,12 +75,16 @@ class VMProcess:
             logging.error(f"Error Connecting to VM's QMP")
             self._set_state(VMState.ERROR)
 
-            from gui.error_dialog import ErrorDialog
             error = ErrorDialog("Error Connecting to VM's QMP", e)
             error.exec()
 
     def _build_command(self):
-        cmd = [f"C:\\msys64\\ucrt64\\bin\\qemu-system-x86_64.exe"]
+        settings = QSettings("QEMUWin", "QEMUWin")
+        if (settings.value("qemu/path")):   
+            cmd = [f"{settings.value("qemu/path")}/qemu-system-x86_64.exe"]
+        else:
+            cmd = [f"qemu-system-x86_64.exe"]
+            logging.debug("Using environment path qemu")
 
         #print(cmd)
 
@@ -94,7 +107,27 @@ class VMProcess:
 
         if self.config.get("storage"):
             for disk in self.config.get("storage"):
-                cmd += ["-drive", f"media=disk,file={disk.get("path")},format={self._detect_format(disk.get("path"))},if={disk.get("bus")}"]
+                if os.path.exists(disk.get("path")):
+                    dtype = disk.get("bus")
+
+                    if dtype == "virtio":
+                        cmd += ["-device", "virtio-scsi-pci,id=scsi"]
+                        cmd += ["-drive", f"file={disk.get("path")},if=none,id=disk{disk.get("id")}"]
+                        cmd += ["-device", f"scsi-hd,drive=disk{disk.get("id")},bus=scsi.{disk.get("id")}"]
+                    elif dtype == "scsi":
+                        cmd += ["-device", "lsi53c895a,id=scsi"]
+                        cmd += ["-drive", f"file={disk.get("path")},if=none,id=disk{disk.get("id")}"]
+                        cmd += ["-device", f"scsi-hd,drive=disk{disk.get("id")},bus=scsi.{disk.get("id")}"]
+                    elif dtype == "ide":
+                        cmd += ["-drive", f"file={disk.get("path")},if=ide"]
+                    elif dtype == "sata":
+                        cmd += ["-device", "ich9-ahci,id=ahci"]
+                        cmd += ["-drive", f"file={disk.get("path")},if=none,id=disk{disk.get("id")}"]
+                        cmd += ["-device", f"ide-hd,drive=disk{disk.get("id")},bus=ahci.{disk.get("id")}"]
+
+                    #cmd += ["-drive", f"media=disk,file={disk.get("path")},format={self._detect_format(disk.get("path"))},if={disk.get("bus")}"]
+                else:
+                    raise FileNotFoundError("Storage path doesn't exist")
 
         #print(cmd)
 
@@ -105,12 +138,18 @@ class VMProcess:
                 cmd += ["-drive"]
                 if medias.get("type") == "CD-ROM":
                     if medias.get("path") not in empty_text:
-                        cmd += [f"media=cdrom,file={medias.get("path")},if=ide,id=cdrom{medias.get("id")}"]
+                        if os.path.exists(medias.get("path")):
+                            cmd += [f"media=cdrom,file={medias.get("path")},if=ide,id=cdrom{medias.get("id")}"]
+                        else:
+                            raise FileNotFoundError("CD-ROM path doesn't exist")
                     else:
                         cmd += [f"media=cdrom,if=ide,id=cdrom{medias.get("id")}"]
                 elif medias.get("type") == "Floppy":
                     if medias.get("path") not in empty_text:
-                        cmd += [f"file=\"{medias.get("path")}\",if=floppy,id=floppy{medias.get("id")}"]
+                        if os.path.exists(medias.get("path")):
+                            cmd += [f"file=\"{medias.get("path")}\",if=floppy,id=floppy{medias.get("id")}"]
+                        else:
+                            raise FileNotFoundError("Floppy path doesn't exist")
                     else:
                         cmd += [f"if=floppy,id=floppy{medias.get("id")}"]
 
@@ -121,15 +160,27 @@ class VMProcess:
 
         #print(cmd)
 
+        cmd += ["-vga", self.config["video"]["model"]]
+
         if self.config["video"]["connection"] and self.config["video"]["connection"] == "VNC":
-            cmd += ["-vnc", f":{self.vnc_port - 5900}"]
+            if self.vnc_port >= 5900:
+                cmd += ["-vnc", f":{self.vnc_port - 5900}"]
+            else:
+                raise ValueError("VNC port must be 5900 or greater")
+
+        #print(cmd)
+
+        if self.config.get("audio") and self.config.get("audio") != "None":
+            cmd += ["-audio", f"driver=dsound,model={self.config.get("audio")}"]
+
+        #print(cmd)
+
+        cmd += ["-device", "tablet"]
         
         #print(cmd)
 
         if self.config.get("qargs"):
             cmd += self.config.get("qargs")
-
-        #print(cmd)
 
         logging.debug(f"Command generated: {" ".join(cmd)}")
         return cmd
@@ -211,7 +262,8 @@ class VMProcess:
         return None
 
     def _monitor(self):
-        code = self.process.wait()
+        stdout, stderr = self.process.communicate()
+        code = self.process.returncode
 
         time.sleep(2)
 
@@ -221,13 +273,17 @@ class VMProcess:
                     self._set_state(VMState.KILLED)
                 else:
                     self._set_state(VMState.STOPPED)
-            else:
+            else:             
                 self._set_state(VMState.ERROR)
 
         self.metadata.delete(self.name)
 
         if self.on_stopped:
             self.on_stopped(self.name)
+
+        if code != 0:
+            logging.error(f"QEMU exited with code {code}\n{stderr}")
+            raise OSError(f"QEMU exited with code {code}")
 
     def stop(self):
         if self.qmp:

@@ -8,8 +8,8 @@ class VideoPage(QWidget):
         layout = QFormLayout()
 
         self.model = QComboBox()
-        self.model.addItems(["virtio", "qxl", "std", "vmware", "vga", "cirrus"])
-        self.model.setCurrentText(config.get("model", "virtio"))
+        self.model.addItems(["virtio", "qxl", "std", "vmware", "cirrus"])
+        self.model.setCurrentText(config.get("model", "std"))
 
         layout.addRow("Video Model:", self.model)
 
@@ -25,7 +25,7 @@ class VideoPage(QWidget):
         connconfig.addWidget(self.conn_label)
 
         self.vnc_port = QSpinBox()
-        self.vnc_port.setRange(5900, 65535) # A little much, I know...
+        self.vnc_port.setRange(5900, 65535)
         connconfig.addWidget(self.vnc_port)
 
         self.auto_port = QCheckBox("Auto Port")
@@ -55,12 +55,12 @@ class VideoPage(QWidget):
     def get_data(self):
         if self.connection.currentText == "QEMU":
             return {
-                "video": self.model.currentText(),
+                "model": self.model.currentText(),
                 "connection": self.connection.currentText()
             }
         else:
             return {
-                "video": self.model.currentText(),
+                "model": self.model.currentText(),
                 "connection": self.connection.currentText(),
                 "port": -1 if self.auto_port.checkState() == Qt.CheckState.Checked else self.vnc_port.value()
             }

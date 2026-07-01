@@ -4,9 +4,9 @@ from PyQt6.QtWidgets import (
     QPushButton, QApplication,
     QScrollArea, QMenu
 )
-from PyQt6.QtGui import QAction, QResizeEvent
+from PyQt6.QtGui import QAction, QResizeEvent, QMouseEvent, QShortcut, QKeySequence, QCursor
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, Qt, QPointF, QEvent
 from qvncwidget6 import QVNCWidget
 
 from gui.theme_manager import IconManager
@@ -20,8 +20,19 @@ class VNCWindow(QMainWindow):
 
         self.app = app
 
+        self.config = config
+
         self.oppened = True
         self.resize_to_window = False
+
+        self.start_pos = QCursor.pos()
+        self.virtual_pos = QCursor.pos()
+
+        self.ignore_next_event = False
+
+        self.grabbing = False
+        self.shortcut = QShortcut(QKeySequence("Ctrl+Alt+G"), self)
+        self.shortcut.activated.connect(self._handle_grab)
 
         self.icons = IconManager(app=self.app)
 
@@ -98,16 +109,18 @@ class VNCWindow(QMainWindow):
 
         self.viewer_widget = QWidget()
         self.viewer_widget.setContentsMargins(0, 0, 0, 0)
+        self.viewer_widget.mousePressEvent = self._handle_click
         
         self.viewer_layout = QHBoxLayout(self.viewer_widget)
         
         self.viewer = QVNCWidget(
             parent=self.viewer_widget,
             host="127.0.0.1", port=config["video"]["port"],
-            readOnly=True,
+            readOnly=False,
             autoResize= not self.resize_to_window
         )
         self.viewer.onResize.connect(self._host_resize_event)
+        self.viewer.setMouseTracking(False)
 
         self.viewer_layout.addWidget(self.viewer)
         self.viewer_layout.setContentsMargins(0, 0, 0, 0)
@@ -160,3 +173,48 @@ class VNCWindow(QMainWindow):
             self.viewer.setFixedSize(self.viewer_container.size().width() - 8, self.viewer_container.size().height() - 8)
         else:
             self.viewer.setMinimumSize(size)
+
+    def _handle_click(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton and not self.grabbing:
+            self._handle_grab()
+    
+    def _handle_grab(self):
+        if self.grabbing:
+            self.viewer.releaseMouse()
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            self.viewer.setMouseTracking(False)
+            self.viewer.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            self.setWindowTitle(f"{self.config["name"]} - VNC Viewer")
+            self.grabbing = False
+        else:
+            self.viewer.setFocus()
+            self.viewer.grabMouse()
+            self.setCursor(Qt.CursorShape.BlankCursor)
+            self.start_pos = QCursor.pos()
+            self.setWindowTitle(f"{self.config["name"]} - VNC Viewer - Press Ctrl+Alt+G to release grab")
+            self.viewer.setMouseTracking(True)
+            self.viewer.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+            self.grabbing = True
+
+    def mouseMoveEvent(self, a0):
+        return super().mouseMoveEvent(a0)
+
+    def mousePressEvent(self, a0):
+        if self.grabbing:
+            self.viewer.mousePressEvent(a0)
+        return super().mousePressEvent(a0)
+    
+    def mouseReleaseEvent(self, a0):
+        if self.grabbing:
+            self.viewer.mouseReleaseEvent(a0)
+        return super().mouseReleaseEvent(a0)
+    
+    def keyPressEvent(self, a0):
+        if self.grabbing:
+            self.viewer.keyPressEvent(a0)
+        return super().keyPressEvent(a0)
+    
+    def keyReleaseEvent(self, a0):
+        if self.grabbing:
+            self.viewer.keyReleaseEvent(a0)
+        return super().keyReleaseEvent(a0)

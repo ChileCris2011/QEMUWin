@@ -36,7 +36,7 @@ class DiskPage(QWidget):
 
     def get_data(self):
         return {
-            "disk": "disk",
+            "disk": "old",
             "path": self.path.text(),
             "bus": self.bus.currentText()
         }

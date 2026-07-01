@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (
     QTextEdit, QPushButton, QHBoxLayout
 )
 from PyQt6.QtCore import QSize
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QGuiApplication
 
 class ErrorDialog(QDialog):
     def __init__(self, message, details):
@@ -25,7 +25,7 @@ class ErrorDialog(QDialog):
         message_layout.addWidget(error_label)
         message_layout.addSpacing(8)
 
-        label = QLabel(f"<b>Error:</b> {message}")
+        label = QLabel(f"<b>Error: </b> {message}")
         message_layout.addWidget(label)
 
         message_layout.addStretch()
@@ -61,12 +61,23 @@ class ErrorDialog(QDialog):
 
         layout.addLayout(button_layout)
 
+    def center_dialog(self): # yeah, it pisses me when it de-centers
+        screen = self.screen() or QGuiApplication.primaryScreen()
+        screen_geometry = screen.availableGeometry()
+
+        dialog_geometry = self.frameGeometry()
+        dialog_geometry.moveCenter(screen_geometry.center())
+
+        self.move(dialog_geometry.topLeft())
+
     def toggle_details(self):
         if self.details.isVisible():
             self.resize(200, 130)
             self.details.hide()
+            self.center_dialog()
             self.toggle_button.setText("Show Details")
         else:
             self.resize(500, 300)
             self.details.show()
+            self.center_dialog()
             self.toggle_button.setText("Hide Details")

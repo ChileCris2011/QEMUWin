@@ -22,7 +22,7 @@ class VMListWidget(QListWidget):
                 item = QListWidgetItem()
                 widget = VMItemWidget(
                     vm_name,
-                    state="stopped",
+                    state=self.manager.get_state(vm_name).value,
                     memory=config.get("memory", "Unknown")
                 )
 

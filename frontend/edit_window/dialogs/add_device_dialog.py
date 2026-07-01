@@ -2,7 +2,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QHBoxLayout,
     QListWidget, QPushButton,
     QDialog, QStackedWidget,
-    QWidget, QSplitter, QListWidgetItem
+    QApplication, QSplitter,
+    QListWidgetItem
 )
 from PyQt6.QtCore import Qt
 
@@ -11,9 +12,11 @@ from frontend.edit_window.dialogs.pages.new_media import NewMediaPage
 #from frontend.edit_window.dialogs.pages.new_nic import NewNICPage
 
 class AddDeviceDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, app=QApplication):
         super().__init__(parent)
         self.setWindowTitle("Add hardware")
+
+        self.app = app
 
         self.pages = []
 
@@ -50,7 +53,7 @@ class AddDeviceDialog(QDialog):
 
         self.setLayout(main_layout)
 
-        self.add_page("Disk", NewDiskPage())
+        self.add_page("Disk", NewDiskPage(app=self.app))
         self.add_page("Media", NewMediaPage())
         #self.add_page("NIC", NewNICPage())
 

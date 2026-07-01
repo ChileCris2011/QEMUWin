@@ -40,6 +40,8 @@ class EditVMWindow(QMainWindow):
 
         self.pages = []
 
+        self.majdisk = 0
+
         central = QWidget()
         main_layout = QVBoxLayout()
 
@@ -86,6 +88,7 @@ class EditVMWindow(QMainWindow):
 
     def build_pages(self):
 
+
         # Core
         self.add_page("Overview", OverviewPage(self.vm_config))
         self.add_page("CPU", CpuPage(self.vm_config))
@@ -93,8 +96,10 @@ class EditVMWindow(QMainWindow):
 
         # Storage
         if self.vm_config.get("storage"):
-            for i, disk in enumerate(self.vm_config.get("storage")):
-                self.add_page(f"Disk {i+1}", DiskPage(disk))
+            for disk in self.vm_config.get("storage"):
+                self.add_page(f"Disk {disk["id"]}", DiskPage(disk))
+                if int(disk["id"]) > self.majdisk:
+                    self.majdisk = int(disk["id"])
 
         # CDROM
 
@@ -159,14 +164,17 @@ class EditVMWindow(QMainWindow):
     # --------------------------------------------------
 
     def add_device(self):
-        dialog = AddDeviceDialog()
+        dialog = AddDeviceDialog(app=self.app)
         if dialog.exec():
             device = dialog.get_data()
 
             match int(device.get("index")):
                 case 0:
-                    page = DiskPage(device.get("info"))
-                    self.add_page("New Disk", page)
+                    info = device.get("info")
+                    self.majdisk += 1
+                    info["id"] = self.majdisk
+                    page = DiskPage(info)
+                    self.add_page(f"(New) Disk {info["id"]}", page)
                 case 1:
                     info = device.get("info")
                     if info.get("type") == "CD-ROM":
