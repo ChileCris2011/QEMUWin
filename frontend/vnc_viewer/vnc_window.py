@@ -2,7 +2,8 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget,
     QVBoxLayout, QHBoxLayout,
     QPushButton, QApplication,
-    QScrollArea, QMenu
+    QScrollArea, QMenu, QMessageBox,
+    QFileDialog
 )
 from PyQt6.QtGui import QAction, QResizeEvent, QMouseEvent, QShortcut, QKeySequence, QCursor
 
@@ -21,10 +22,12 @@ class VNCWindow(QMainWindow):
         self.app = app
 
         self.config = config
+        self.process = process
 
         self.paused = False
 
         self.onPause = None
+        self.onChangeMedia = None
 
         self.oppened = True
         self.resize_to_window = False
@@ -60,62 +63,16 @@ class VNCWindow(QMainWindow):
 
         self.menu.addSpacing(16)
 
-        # Get all media to assign buttons
+        media_options = QPushButton()
+        media_options.setIcon(self.icons.get_icon("disk"))
+        media_options.setToolTip("Removable media")
 
-        self.cdbutton = False
-        self.fpbutton = False
+        self.media_menu = QMenu()
+        self.media_menu.aboutToShow.connect(self._refresh_media_menu)
+        self._build_media_menu()
 
-        self.disk_btn = {}
-        self.floppy_btn = {}
-        
-        if config.get("media"):
-            print(config.get("media"))
-            for media in config.get("media"):
-                print(media["type"])
-
-                if media["type"] == "CD-ROM":
-                    if not self.cdbutton:
-                        self.cdman = QPushButton("CD-ROMs")
-                        self.cdman.setIcon(self.icons.get_icon("disk"))
-                        self.cdman.setToolTip("CD-ROM options")
-                        
-                        self.cdmen = QMenu()
-
-                        self.cdbutton = True
-                    
-                    disk_num = media["id"]
-                    self.disk_btn[disk_num] = QAction(f"CD-ROM {disk_num}")
-                    self.disk_btn[disk_num].triggered.connect(self._handle_disk)
-                    self.cdmen.addAction(self.disk_btn[disk_num])
-
-                    if self.cdbutton:
-                        self.cdman.setMenu(self.cdmen)
-
-                elif media["type"] == "Floppy":
-                    if not self.fpbutton:
-                        self.fpman = QPushButton("Floppys")
-                        self.fpman.setIcon(self.icons.get_icon("floppy"))
-                        self.fpman.setToolTip("Floppy options")
-
-                        self.fpmen = QMenu()
-
-                        self.fpbutton = True
-
-                    flop_num = media["id"]
-                    self.floppy_btn[flop_num] = QAction(f"Floppy {flop_num}")
-                    self.floppy_btn[flop_num].triggered.connect(self._handle_flop)
-                    self.fpmen.addAction(self.floppy_btn[flop_num])
-
-                    if self.fpbutton:
-                        self.fpman.setMenu(self.fpmen)
-
-        print(self.disk_btn)
-        print(self.floppy_btn)
-
-        self.menu.addSpacing(18)
-
-        self.menu.addWidget(self.cdman)
-        self.menu.addWidget(self.fpman)
+        media_options.setMenu(self.media_menu)
+        self.menu.addWidget(media_options)
 
         self.menu.addStretch()
 
@@ -215,6 +172,7 @@ class VNCWindow(QMainWindow):
     def _handle_grab(self):
         if self.grabbing:
             self.viewer.releaseMouse()
+            self.viewer.releaseKeyboard()
             self.setCursor(Qt.CursorShape.ArrowCursor)
             self.viewer.setMouseTracking(False)
             self.viewer.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -224,6 +182,7 @@ class VNCWindow(QMainWindow):
         else:
             self.viewer.setFocus()
             self.viewer.grabMouse()
+            self.viewer.grabKeyboard()
             self.setCursor(Qt.CursorShape.BlankCursor)
             self.start_pos = QCursor.pos()
             self.setWindowTitle(f"{self.config["name"]} - VNC Viewer - Press Ctrl+Alt+G to release grab")
@@ -238,6 +197,97 @@ class VNCWindow(QMainWindow):
         self.btn_resume.setEnabled(self.paused)
         if self.onPause:
             self.onPause(self.config["name"], self.paused)
+
+    def _refresh_media_menu(self):
+        self.media_menu.clear()
+        self._build_media_menu()
+
+    def _build_media_menu(self):
+        media_items = self._get_media_items()
+
+        if not media_items:
+            empty_action = QAction("    No removable media", self)
+            empty_action.setEnabled(False)
+            self.media_menu.addAction(empty_action)
+            return
+
+        cdroms = [item for item in media_items if item.get("type") == "CD-ROM"]
+        floppies = [item for item in media_items if item.get("type") == "Floppy"]
+
+        self._add_media_category(self.media_menu, "CD-ROM", cdroms)
+        self._add_media_category(self.media_menu, "Floppy", floppies)
+
+    def _add_media_category(self, root_menu, title, media_items):
+        category_menu = root_menu.addMenu(f"    {title}")
+
+        if not media_items:
+            empty_action = QAction("    No drives", self)
+            empty_action.setEnabled(False)
+            category_menu.addAction(empty_action)
+            return
+
+        for media in media_items:
+            media_id = media.get("id", 0)
+            media_path = media.get("path", "Empty")
+            drive_menu = category_menu.addMenu(f"    {title} {media_id}: {self._media_filename(media_path)}")
+
+            choose_action = QAction("    Choose disk image...", self)
+            choose_action.triggered.connect(lambda checked=False, item=media: self._select_media_file(item))
+            drive_menu.addAction(choose_action)
+
+            eject_action = QAction("    Eject", self)
+            eject_action.triggered.connect(lambda checked=False, item=media: self._eject_media(item))
+            drive_menu.addAction(eject_action)
+
+    def _get_media_items(self):
+        media = self.config.get("media", [])
+
+        if isinstance(media, dict):
+            media = media.values()
+
+        return [
+            item for item in media
+            if item.get("type") in ("CD-ROM", "Floppy")
+        ]
+
+    def _media_filename(self, path):
+        if path in ("Empty", "", " ", "empty", None):
+            return "Empty"
+
+        return str(path).replace("\\", "/").split("/")[-1]
+
+    def _select_media_file(self, media):
+        if media.get("type") == "CD-ROM":
+            title = "Select CD-ROM Image"
+            file_filter = "CD-ROM Images (*.iso);;Disk Images (*.iso *.img *.raw);;All Files (*)"
+        else:
+            title = "Select Floppy Image"
+            file_filter = "Floppy Images (*.img *.ima *.flp);;Disk Images (*.img *.ima *.flp *.raw);;All Files (*)"
+
+        path, _ = QFileDialog.getOpenFileName(self, title, filter=file_filter)
+        if path:
+            self._handle_media_change(media, path)
+
+    def _eject_media(self, media):
+        self._handle_media_change(media, "Empty")
+
+    def _handle_media_change(self, media, path):
+        updated_media = dict(media)
+        updated_media["path"] = path
+
+        try:
+            if self.onChangeMedia:
+                self.onChangeMedia(self.config["name"], updated_media)
+            elif hasattr(self, "process") and self.process:
+                self.process.change_media(updated_media)
+
+            media["path"] = path
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Media Change Failed",
+                f"Could not change {updated_media.get('type')} {updated_media.get('id')}.\n\n{e}"
+            )
     
     def _state_changed(self, name, state):
         if name == self.config["name"]:
@@ -262,8 +312,6 @@ class VNCWindow(QMainWindow):
     def mousePressEvent(self, a0):
         if self.grabbing:
             self.viewer.mousePressEvent(a0)
-        else:
-            self._handle_click()
         return super().mousePressEvent(a0)
     
     def mouseReleaseEvent(self, a0):

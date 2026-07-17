@@ -153,6 +153,29 @@ class QMPClient:
     def resume(self):
         return self.execute("cont")
 
+    def change_medium(self, device, path):
+        empty_text = ["Empty", "", " ", "empty", None]
+
+        if path in empty_text:
+            return self.execute("eject", {
+                "device": device,
+                "force": True
+            })
+
+        response = self.execute("blockdev-change-medium", {
+            "device": device,
+            "filename": path,
+            "force": True
+        })
+
+        if "error" in response:
+            return self.execute("change", {
+                "device": device,
+                "target": path
+            })
+
+        return response
+
     def close(self):
         self._running = False
         if self.sock:

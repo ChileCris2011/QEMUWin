@@ -108,6 +108,10 @@ class VMManager:
         if name in self.processes:
             self.processes[name].resume()
 
+    def change_media(self, name, media):
+        if name in self.processes:
+            self.processes[name].change_media(media)
+
     def stop_vm(self, name):
         if name in self.processes:
             self.processes[name].stop()

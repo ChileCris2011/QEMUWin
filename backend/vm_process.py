@@ -299,6 +299,26 @@ class VMProcess:
             except:
                 raise RuntimeError("Failed to resume VM")
 
+    def change_media(self, media):
+        if self.qmp:
+            try:
+                media_type = media.get("type")
+                media_id = media.get("id")
+                path = media.get("path")
+
+                if media_type == "CD-ROM":
+                    device = f"cdrom{media_id}"
+                elif media_type == "Floppy":
+                    device = f"floppy{media_id}"
+                else:
+                    raise ValueError(f"Unsupported removable media type: {media_type}")
+
+                response = self.qmp.change_medium(device, path)
+                if "error" in response:
+                    raise RuntimeError(response["error"].get("desc", "Unknown QMP error"))
+            except Exception as e:
+                raise RuntimeError("Failed to change VM media") from e
+
     def stop(self):
         if self.qmp:
             try:

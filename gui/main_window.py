@@ -343,6 +343,7 @@ class MainWindow(QMainWindow):
         try:
             self.vnc_window = VNCWindow(self.process[name]["config"], self.process[name]["process"], self.app)
             self.vnc_window.onPause = self._handle_pause
+            self.vnc_window.onChangeMedia = self._handle_media_change
             self.vnc_window.destroyed.connect(self._closed_vnc)
             self.vnc_window.show()
         except TypeError:
@@ -350,6 +351,7 @@ class MainWindow(QMainWindow):
     
     def _closed_vnc(self):
         self.vnc_window.onPause = None
+        self.vnc_window.onChangeMedia = None
         self.vnc_window = None
 
     def _start_click(self):
@@ -377,3 +379,6 @@ class MainWindow(QMainWindow):
             self.manager.pause_vm(name)
         else:
             self.manager.resume_vm(name)
+
+    def _handle_media_change(self, name, media):
+        self.manager.change_media(name, media)
