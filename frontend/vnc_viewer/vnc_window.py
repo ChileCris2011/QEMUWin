@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
     QScrollArea, QMenu, QMessageBox,
     QFileDialog
 )
-from PyQt6.QtGui import QAction, QResizeEvent, QMouseEvent, QShortcut, QKeySequence, QCursor
+from PyQt6.QtGui import QAction, QResizeEvent, QMouseEvent, QShortcut, QKeySequence, QCursor, QKeyEvent
 
 from PyQt6.QtCore import QSize, Qt, QPointF, QEvent
 from qvncwidget6 import QVNCWidget
@@ -63,9 +63,9 @@ class VNCWindow(QMainWindow):
 
         self.menu.addSpacing(16)
 
-        media_options = QPushButton()
+        media_options = QPushButton("Removable media")
         media_options.setIcon(self.icons.get_icon("disk"))
-        media_options.setToolTip("Removable media")
+        media_options.setToolTip("Change removable media")
 
         self.media_menu = QMenu()
         self.media_menu.aboutToShow.connect(self._refresh_media_menu)
@@ -73,6 +73,16 @@ class VNCWindow(QMainWindow):
 
         media_options.setMenu(self.media_menu)
         self.menu.addWidget(media_options)
+
+        insert_options = QPushButton("Insert")
+        insert_options.setIcon(self.icons.get_icon("insert"))
+        insert_options.setToolTip("Insert key combination")
+
+        self.insert_menu = QMenu()
+        self._build_insert_menu()
+
+        insert_options.setMenu(self.insert_menu)
+        self.menu.addWidget(insert_options)
 
         self.menu.addStretch()
 
@@ -197,6 +207,35 @@ class VNCWindow(QMainWindow):
         self.btn_resume.setEnabled(self.paused)
         if self.onPause:
             self.onPause(self.config["name"], self.paused)
+
+    def _build_insert_menu(self):
+        key_combos = [
+            ("    Ctrl+Alt+Del", [Qt.Key.Key_Control, Qt.Key.Key_Alt, Qt.Key.Key_Delete]),
+            ("    Ctrl+Alt+Backspace", [Qt.Key.Key_Control, Qt.Key.Key_Alt, Qt.Key.Key_Backspace]),
+            ("    Alt+Tab", [Qt.Key.Key_Alt, Qt.Key.Key_Tab]),
+            ("    Alt+F4", [Qt.Key.Key_Alt, Qt.Key.Key_F4]),
+            ("    Ctrl+Esc", [Qt.Key.Key_Control, Qt.Key.Key_Escape]),
+            ("    Windows key", [Qt.Key.Key_Meta]),
+            ("    Print Screen", [Qt.Key.Key_Print]),
+            ("    Ctrl+Alt+F1", [Qt.Key.Key_Control, Qt.Key.Key_Alt, Qt.Key.Key_F1]),
+            ("    Ctrl+Alt+F2", [Qt.Key.Key_Control, Qt.Key.Key_Alt, Qt.Key.Key_F2]),
+            ("    Ctrl+Alt+F3", [Qt.Key.Key_Control, Qt.Key.Key_Alt, Qt.Key.Key_F3]),
+        ]
+
+        for label, keys in key_combos:
+            action = QAction(label, self)
+            action.triggered.connect(lambda checked=False, combo=keys: self._send_key_combo(combo))
+            self.insert_menu.addAction(action)
+
+    def _send_key_combo(self, keys):
+        self.viewer.setFocus()
+        for key in keys:
+            self.viewer.keyPressEvent(self._make_key_event(QEvent.Type.KeyPress, key))
+        for key in reversed(keys):
+            self.viewer.keyReleaseEvent(self._make_key_event(QEvent.Type.KeyRelease, key))
+
+    def _make_key_event(self, event_type, key):
+        return QKeyEvent(event_type, key, Qt.KeyboardModifier.NoModifier, "")
 
     def _refresh_media_menu(self):
         self.media_menu.clear()

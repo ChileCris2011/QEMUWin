@@ -179,6 +179,10 @@ class VMProcess:
         
         #print(cmd)
 
+        cmd += ["-boot", self.config.get("boot")]
+
+        #print(cmd)
+
         if self.config.get("qargs"):
             cmd += self.config.get("qargs")
 
@@ -316,8 +320,19 @@ class VMProcess:
                 response = self.qmp.change_medium(device, path)
                 if "error" in response:
                     raise RuntimeError(response["error"].get("desc", "Unknown QMP error"))
+
             except Exception as e:
                 raise RuntimeError("Failed to change VM media") from e
+
+            from backend.config_manager import ConfigManager
+            confman = ConfigManager()
+            new_med = []
+            for med in self.config["media"]:
+                if med["type"] == media_type and int(med["id"]) == int(media_id):
+                    med["path"] = path
+                new_med.append(med)
+            self.config["media"] = new_med
+            confman.save_vm(self.name, self.config)
 
     def stop(self):
         if self.qmp:

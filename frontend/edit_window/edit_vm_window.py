@@ -273,6 +273,7 @@ class EditVMWindow(QMainWindow):
         new_config["media"] = media
         new_config["network"] = network
         new_config["qargs"] = args
+        new_config["version"] = 2
 
         print(f"New config: {new_config}\n\n")
 

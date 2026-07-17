@@ -9,6 +9,8 @@ class DiskPage(QWidget):
     def __init__(self, disk_config: dict):
         super().__init__()
 
+        self.conf = disk_config
+
         layout = QFormLayout()
 
         self.path = QLineEdit(disk_config.get("path", ""))
@@ -38,5 +40,6 @@ class DiskPage(QWidget):
         return {
             "disk": "old",
             "path": self.path.text(),
-            "bus": self.bus.currentText()
+            "bus": self.bus.currentText(),
+            "id": self.conf["id"]
         }

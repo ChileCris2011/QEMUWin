@@ -271,8 +271,13 @@ class MainWindow(QMainWindow):
                                 elif o["type"] == "Floppy":
                                     o["id"] = fid
                                     fid += 1
+
+                            # boot order
+                            conf["boot"] = "c"
+                            
                             conf["version"] = main_ver
                             self.config_man.save_vm(i, conf)
+                            self.config_man.normalize_vm_filename(conf.get("name") or i)
                             logging.info(f"Succesfully updated file from V1 to V{main_ver}")
                         except Exception as e:
                             logging.error(f"There was an error while converting {i}.json file. Skipping...")

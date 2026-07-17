@@ -13,6 +13,7 @@
     <file>resources/icons/dark/disk.svg</file>
     <file>resources/icons/dark/floppy.svg</file>
     <file>resources/icons/dark/on_off.svg</file>
+    <file>resources/icons/dark/insert.svg</file>
     <file>resources/icons/light/close.svg</file>
     <file>resources/icons/light/delete.svg</file>
     <file>resources/icons/light/edit.svg</file>
@@ -25,5 +26,6 @@
     <file>resources/icons/light/disk.svg</file>
     <file>resources/icons/light/floppy.svg</file>
     <file>resources/icons/light/on_off.svg</file>
+    <file>resources/icons/light/insert.svg</file>
   </qresource>
 </RCC>
