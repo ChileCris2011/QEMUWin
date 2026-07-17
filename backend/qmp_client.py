@@ -39,7 +39,7 @@ class QMPClient:
 
         self.execute("qmp_capabilities")
 
-    def _wait_for_qmp(self, host="127.0.0.1", port=4444, timeout=5):
+    def _wait_for_qmp(self, host="127.0.0.1", port=4444, timeout=10):
         start = time.time()
         while time.time() - start < timeout:
             try:
@@ -146,6 +146,12 @@ class QMPClient:
 
     def quit(self):
         return self.execute("quit")
+    
+    def pause(self):
+        return self.execute("stop")
+    
+    def resume(self):
+        return self.execute("cont")
 
     def close(self):
         self._running = False

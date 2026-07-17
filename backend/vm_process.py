@@ -8,7 +8,7 @@ from gui.error_dialog import ErrorDialog
 
 from PyQt6.QtCore import QSettings
 
-import logging, time, os
+import logging, time, os, traceback
 
 class VMProcess:
     def __init__(self, name, config, qmp_port, vnc_port=None):
@@ -75,7 +75,7 @@ class VMProcess:
             logging.error(f"Error Connecting to VM's QMP")
             self._set_state(VMState.ERROR)
 
-            error = ErrorDialog("Error Connecting to VM's QMP", e)
+            error = ErrorDialog("Error Connecting to VM's QMP", "".join(traceback.format_exception(e)))
             error.exec()
 
     def _build_command(self):
@@ -175,7 +175,7 @@ class VMProcess:
 
         #print(cmd)
 
-        cmd += ["-device", "tablet"]
+        cmd += ["-usbdevice", "tablet"]
         
         #print(cmd)
 
@@ -284,18 +284,31 @@ class VMProcess:
         if code != 0:
             logging.error(f"QEMU exited with code {code}\n{stderr}")
             raise OSError(f"QEMU exited with code {code}")
+        
+    def pause(self):
+        if self.qmp:
+            try:
+                self.qmp.pause()
+            except:
+                raise RuntimeError("Failed to pause VM")
+            
+    def resume(self):
+        if self.qmp:
+            try:
+                self.qmp.resume()
+            except:
+                raise RuntimeError("Failed to resume VM")
 
     def stop(self):
         if self.qmp:
             try:
                 self.qmp.shutdown()
             except:
-                raise RuntimeError("Failed to send ACPI Shutdown signal to VM")
+                raise RuntimeError("Failed to send shutdown signal to VM")
     def quit(self):
         if self.qmp:
             try:
-                self.killed = True
                 self.qmp.quit()
+                self.killed = True
             except:
-                self.killed = False
                 raise RuntimeError("Failed to end VM process")

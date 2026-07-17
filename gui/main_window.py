@@ -13,6 +13,7 @@ from backend.config_manager import ConfigManager
 from gui.vm_list_widget import VMListWidget
 from gui.theme_manager import IconManager, ThemeManager
 from gui.settings import SettingsDialog
+from gui.error_dialog import ErrorDialog
 
 import logging
 
@@ -23,6 +24,7 @@ class MainWindow(QMainWindow):
     def __init__(self, manager, app=QApplication):
         super().__init__()
         self.manager = manager
+        self.config_man = ConfigManager()
 
         self.app = app
 
@@ -44,8 +46,16 @@ class MainWindow(QMainWindow):
         self.vm_state_changed.connect(self._update_vm_ui)
         self.theme_manager.themeChanged.connect(self._build_ui)
 
+        if self.update_error != None:
+            import traceback
+            error_trace = "".join(traceback.format_exception(self.update_error))
+            erdiag = ErrorDialog("There was an error when updating a VM config file", error_trace)
+            erdiag.exec()
+            logging.exception(error_trace)
+
         self.manager.restore_vms()
-        logging.info("VMs restored")
+        logging.debug("VMs restored")
+        
 
     def _build_ui(self):
         central = QWidget()
@@ -61,7 +71,7 @@ class MainWindow(QMainWindow):
 
         self.btn_new = QPushButton("New")
         self.btn_start = QPushButton("Start")
-        self.btn_stop = QPushButton("Stop")
+        self.btn_pause = QPushButton("Pause")
         self.btn_kill = QPushButton("Kill")
         self.btn_edit = QPushButton("Edit")
         self.btn_delete = QPushButton("Delete")
@@ -69,8 +79,8 @@ class MainWindow(QMainWindow):
         self.btn_config = QPushButton("Settings")
 
         self.btn_new.setIcon(self.icon_manager.get_icon("new_window"))
-        self.btn_start.setIcon(self.icon_manager.get_icon("play_arrow"))
-        self.btn_stop.setIcon(self.icon_manager.get_icon("stop"))
+        self.btn_start.setIcon(self.icon_manager.get_icon("on_off"))
+        self.btn_pause.setIcon(self.icon_manager.get_icon("pause"))
         self.btn_kill.setIcon(self.icon_manager.get_icon("close"))
         self.btn_edit.setIcon(self.icon_manager.get_icon("edit"))
         self.btn_delete.setIcon(self.icon_manager.get_icon("delete"))
@@ -78,7 +88,7 @@ class MainWindow(QMainWindow):
 
         toolbar_layout.addWidget(self.btn_new)
         toolbar_layout.addWidget(self.btn_start)
-        toolbar_layout.addWidget(self.btn_stop)
+        toolbar_layout.addWidget(self.btn_pause)
         toolbar_layout.addWidget(self.btn_kill)
         toolbar_layout.addWidget(self.btn_edit)
         toolbar_layout.addWidget(self.btn_delete)
@@ -99,8 +109,8 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
 
         self.btn_new.clicked.connect(self._new_vm)
-        self.btn_start.clicked.connect(self._start)
-        self.btn_stop.clicked.connect(self._stop)
+        self.btn_start.clicked.connect(self._start_click)
+        self.btn_pause.clicked.connect(self._pause_click)
         self.btn_kill.clicked.connect(self._kill)
         self.btn_edit.clicked.connect(self._edit_vm)
         self.btn_delete.clicked.connect(self._delete_vm)
@@ -166,10 +176,8 @@ class MainWindow(QMainWindow):
         name = self.vm_list.get_selected()
         if not name:
             return
-        
-        config = ConfigManager()
          
-        self.edit_window = EditVMWindow(config.load_vm(name), self.vm_list)
+        self.edit_window = EditVMWindow(self.config_man.load_vm(name), self.vm_list)
         
         self.edit_window.show()
 
@@ -205,6 +213,8 @@ class MainWindow(QMainWindow):
 
     def _backend_state_changed(self, name, state):
         self.vm_state_changed.emit(name, state)
+        if self.vnc_window:
+            self.vnc_window._state_changed(name, state)
         self._update_buttons()
 
 
@@ -217,14 +227,13 @@ class MainWindow(QMainWindow):
 
         logging.debug("Looking for old config files")
 
-        from backend.config_manager import ConfigManager
-        config_man = ConfigManager()
-        lvms = config_man.list_vms()
+        lvms = self.config_man.list_vms()
 
         updating = False
+        self.update_error = None
 
         for i in lvms:
-            conf = config_man.load_vm(i)
+            conf = self.config_man.load_vm(i)
             ver = conf.get("version", 0)
             if ver != main_ver:
                 logging.info("Found an outdated VM config file. Updating to a current version")
@@ -236,8 +245,8 @@ class MainWindow(QMainWindow):
 
                 match ver:
                     case 0:
-                        logging.info(f"File {i}.json didn't have a version definition. Asuming version 1")
-                        config_man.backup_vm(i)
+                        logging.warning(f"File {i}.json didn't have a version definition. Asuming version 1")
+                        self.config_man.backup_vm(i)
                         try:
                             # video additions
                             old_video_model = conf["video"]
@@ -263,9 +272,11 @@ class MainWindow(QMainWindow):
                                     o["id"] = fid
                                     fid += 1
                             conf["version"] = main_ver
-                            config_man.save_vm(i, conf)
-                        except:
-                            logging.warning(f"There was an error while converting {i}.json file. Skipping...")
+                            self.config_man.save_vm(i, conf)
+                            logging.info(f"Succesfully updated file from V1 to V{main_ver}")
+                        except Exception as e:
+                            logging.error(f"There was an error while converting {i}.json file. Skipping...")
+                            self.update_error = e
 
                     # add more cases when updating
                     case _:
@@ -278,7 +289,7 @@ class MainWindow(QMainWindow):
 
         if not name:
             self.btn_start.setDisabled(True)
-            self.btn_stop.setDisabled(True)
+            self.btn_pause.setDisabled(True)
             self.btn_kill.setDisabled(True)
             self.btn_edit.setDisabled(True)
             self.btn_delete.setDisabled(True)
@@ -286,34 +297,83 @@ class MainWindow(QMainWindow):
 
         state = self.manager.get_state(name)
 
-        self.btn_start.setDisabled(state.value == "running")
-        self.btn_stop.setDisabled(state.value != "running")
-        self.btn_kill.setDisabled(state.value != "running")
+        if state.value == "stopped" or state.value == "error":
+            self.btn_start.setIcon(self.icon_manager.get_icon("on_off"))
+            self.btn_start.setText("Start")
+            self.btn_start.setEnabled(True)
+        else:
+            self.btn_start.setIcon(self.icon_manager.get_icon("stop"))
+            self.btn_start.setText("Stop")
+            self.btn_start.setEnabled(True)
+            
+        
+        if state.value == "paused":
+            self.btn_pause.setIcon(self.icon_manager.get_icon("play_arrow"))
+            self.btn_pause.setText("Resume")
+            self.btn_pause.setDisabled(False)
+        elif state.value == "running":
+            self.btn_pause.setIcon(self.icon_manager.get_icon("pause"))
+            self.btn_pause.setText("Pause")
+            self.btn_pause.setDisabled(False)
+        else:
+            self.btn_pause.setIcon(self.icon_manager.get_icon("pause"))
+            self.btn_pause.setText("Pause")
+            self.btn_pause.setDisabled(True)
+
+
+        self.btn_kill.setEnabled(state.value == "running" or state.value == "paused")
         self.btn_edit.setDisabled(state.value != "stopped")
         self.btn_delete.setDisabled(state.value != "stopped")
 
     def _manage_double(self):
         name = self.vm_list.get_selected()
-        
-        if self.vnc_window:
-            self.vnc_window.close()
-            self.vnc_window = None
+        conf = self.config_man.load_vm(name)
 
         if not self.process.get(name, ""):
             self._start()
 
+        if conf["video"]["connection"] != "VNC":
+            return
+        
+        if self.vnc_window:
+            self.vnc_window.close()
+            self.vnc_window.onPause = None
+            self.vnc_window = None
+
         try:
             self.vnc_window = VNCWindow(self.process[name]["config"], self.process[name]["process"], self.app)
+            self.vnc_window.onPause = self._handle_pause
             self.vnc_window.destroyed.connect(self._closed_vnc)
             self.vnc_window.show()
         except TypeError:
             logging.warning(f"Tried to open {name} VM's VNC, but is not found...")
     
     def _closed_vnc(self):
+        self.vnc_window.onPause = None
         self.vnc_window = None
+
+    def _start_click(self):
+        if self.btn_start.text() == "Stop":
+            self._stop()
+        else:
+            self._start()
+    
+    def _pause_click(self):
+        name = self.vm_list.get_selected()
+        if self.btn_pause.isEnabled():
+            if self.btn_pause.text() == "Pause":
+                self.manager.pause_vm(name)
+            else:
+                self.manager.resume_vm(name)
 
     def _handle_stop(self, name):
         if self.process.pop(name, False):
             logging.debug(f"Removed VM {name} VNC process")
         else:
             logging.debug(f"Aparently, {name} doesn't exists...")
+    
+    def _handle_pause(self, name, paused):
+        if paused:
+            self.manager.pause_vm(name)
+        else:
+            self.manager.resume_vm(name)

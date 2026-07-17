@@ -12,7 +12,7 @@ open("./latest.log", "w", encoding="utf-8")
 
 logging.basicConfig(
     filename="latest.log",
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
@@ -23,6 +23,7 @@ if __name__ == "__main__":
 
     threading.excepthook = error_handler.thread_exception_hook
     sys.excepthook = error_handler.global_exception_hook
+
     logging.info("----------------------------")
     logging.info("------- QEMUWin v1.2 -------")
     logging.info("----------------------------")

@@ -3,6 +3,8 @@ from PyQt6.QtWidgets import (
     QSpinBox, QComboBox
 )
 
+from gui.memorybar import MemoryBar
+
 class PageCpuMemory(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -14,9 +16,7 @@ class PageCpuMemory(QWizardPage):
         self.cores.setRange(1, 64)
         self.cores.setValue(2)
 
-        self.memory = QSpinBox()
-        self.memory.setRange(512, 131072)
-        self.memory.setValue(2048)
+        self.memory = MemoryBar()
 
         self.cpu_model = QComboBox()
         self.cpu_model.addItems(["athlon", "core2duo", "coreduo", "kvm32", "kvm64", "n270", "pentium", "pentium2", "pentium3", "phenom", "qemu32", "qemu64", "base", "host", "max" , "486", "Broadwell", "Cascadelake-Server", "ClearwaterForest", "Conroe", "Cooperlake", "Denverton", "Dhyana", "EPYC", "EPIC-Genoa", "EPIC-IBPB", "EPYC-Milan", "EPYC-Rome", "EPIC-Turin", "GraniteRapids", "Haswell", "Icelake-Server", "IvyBridge", "KnightsMill", "Nehalem", "Opteron_G1", "Opteron_G2", "Opteron_G3", "Opteron_G4", "Opteron_G5", "Penryn", "SandyBridge", "SapphireRapids", "SierraForest", "Skylake-Client", "Skylake-Server", "Snowridge", "Westmere", "YongFeng"])
@@ -34,5 +34,5 @@ class PageCpuMemory(QWizardPage):
                 "model": self.cpu_model.currentText(),
                 "cores": self.cores.value()
             },
-            "memory": self.memory.value()
+            "memory": self.memory.slider.value()
         }

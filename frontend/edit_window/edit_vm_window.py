@@ -256,10 +256,7 @@ class EditVMWindow(QMainWindow):
                     new_config["audio"] = data["audio"]
 
                 elif "video" in data:
-                    new_config.update({"video": data})
-                
-                elif "connection" in data:
-                    new_config
+                    new_config.update(data)
 
                 elif "usb" in data:
                     new_config["usb"] = data["usb"]

@@ -55,10 +55,10 @@ class VMManager:
     def restore_vms(self):
         vms = self.list_vms()
         for name in vms:
-            logging.info(f"Trying to restore VM {name}")
+            logging.debug(f"Trying to restore VM {name}")
             config = self.config.load_vm(name)
             vm = VMProcess(name, config, None, None)
-            logging.info("...")
+            logging.debug("...")
             result = vm.restore_vm()
             if result:
                 vm.on_state_changed = self._vm_state_changed
@@ -99,6 +99,14 @@ class VMManager:
             "config": config,
             "process": vm
         }
+    
+    def pause_vm(self, name):
+        if name in self.processes:
+            self.processes[name].pause()
+    
+    def resume_vm(self, name):
+        if name in self.processes:
+            self.processes[name].resume()
 
     def stop_vm(self, name):
         if name in self.processes:
@@ -138,7 +146,7 @@ class VMManager:
 
             if mode == "create":
                 self._create_disk_file(disk)
-                disk["path"] = f"{disk["path"]}\\{disk["name"]}.{disk["fmat"]}"
+                disk["path"] = os.path.join(disk["path"], f"{disk["name"]}.{disk["fmat"]}")
                 disk.pop("size", None)
                 disk.pop("fmat", None)
                 disk.pop("name")
@@ -170,7 +178,7 @@ class VMManager:
 
     def _create_disk_file(self, disk):
 
-        path = f"{disk["path"]}\\{disk["name"]}.{disk["fmat"]}"
+        path = os.path.join(disk["path"], f"{disk["name"]}.{disk["fmat"]}")
         size = disk["size"]
         fmt = disk["fmat"]
 
@@ -187,11 +195,11 @@ class VMManager:
 
         if setts.value("qemu/path", False):
             cmd += [
-                f"{setts.value("qemu/path")}\\qemu-img"
+                os.path.join(setts.value("qemu/path"), "qemu-img.exe")
             ]
         else:
             cmd = [
-                "qemu-img"
+                "qemu-img.exe"
             ]
 
         cmd += [

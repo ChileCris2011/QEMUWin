@@ -22,6 +22,10 @@ class VNCWindow(QMainWindow):
 
         self.config = config
 
+        self.paused = False
+
+        self.onPause = None
+
         self.oppened = True
         self.resize_to_window = False
 
@@ -41,20 +45,25 @@ class VNCWindow(QMainWindow):
 
         self.menu = QHBoxLayout()
 
-        btn_pause = QPushButton()
-        btn_pause.setIcon(self.icons.get_icon("pause"))
-        btn_pause.setToolTip("Pause VM")
-        self.menu.addWidget(btn_pause)
+        self.btn_pause = QPushButton()
+        self.btn_pause.setIcon(self.icons.get_icon("pause"))
+        self.btn_pause.setToolTip("Pause VM")
+        self.btn_pause.clicked.connect(self._handle_pause)
+        self.menu.addWidget(self.btn_pause)
 
-        btn_resume = QPushButton()
-        btn_resume.setIcon(self.icons.get_icon("play_arrow"))
-        btn_resume.setToolTip("Resume VM")
-        btn_resume.setEnabled(False)
-        self.menu.addWidget(btn_resume)
+        self.btn_resume = QPushButton()
+        self.btn_resume.setIcon(self.icons.get_icon("play_arrow"))
+        self.btn_resume.setToolTip("Resume VM")
+        self.btn_resume.setEnabled(False)
+        self.btn_resume.clicked.connect(self._handle_pause)
+        self.menu.addWidget(self.btn_resume)
 
         self.menu.addSpacing(16)
 
         # Get all media to assign buttons
+
+        self.cdbutton = False
+        self.fpbutton = False
 
         self.disk_btn = {}
         self.floppy_btn = {}
@@ -65,24 +74,48 @@ class VNCWindow(QMainWindow):
                 print(media["type"])
 
                 if media["type"] == "CD-ROM":
+                    if not self.cdbutton:
+                        self.cdman = QPushButton("CD-ROMs")
+                        self.cdman.setIcon(self.icons.get_icon("disk"))
+                        self.cdman.setToolTip("CD-ROM options")
+                        
+                        self.cdmen = QMenu()
+
+                        self.cdbutton = True
+                    
                     disk_num = media["id"]
-                    self.disk_btn[disk_num] = QPushButton()
-                    if disk_num < 9:
-                        self.disk_btn[disk_num].setIcon(self.icons.get_icon(f"disk_{disk_num}"))
-                    else:
-                        self.disk_btn[disk_num].setIcon(self.icons.get_icon("disk_plus"))
-                    self.disk_btn[disk_num].setToolTip(f"CD-ROM {disk_num}")
-                    self.menu.addWidget(self.disk_btn[disk_num])
+                    self.disk_btn[disk_num] = QAction(f"CD-ROM {disk_num}")
+                    self.disk_btn[disk_num].triggered.connect(self._handle_disk)
+                    self.cdmen.addAction(self.disk_btn[disk_num])
+
+                    if self.cdbutton:
+                        self.cdman.setMenu(self.cdmen)
 
                 elif media["type"] == "Floppy":
+                    if not self.fpbutton:
+                        self.fpman = QPushButton("Floppys")
+                        self.fpman.setIcon(self.icons.get_icon("floppy"))
+                        self.fpman.setToolTip("Floppy options")
+
+                        self.fpmen = QMenu()
+
+                        self.fpbutton = True
+
                     flop_num = media["id"]
-                    self.floppy_btn[flop_num] = QPushButton()
-                    self.floppy_btn[flop_num].setIcon(self.icons.get_icon(f"floppy_{flop_num}")) # QEMU doesn't accepts more than 2 floppy drives, so no need to verify
-                    self.floppy_btn[flop_num].setToolTip(f"Floppy {flop_num}")
-                    self.menu.addWidget(self.floppy_btn[flop_num])
+                    self.floppy_btn[flop_num] = QAction(f"Floppy {flop_num}")
+                    self.floppy_btn[flop_num].triggered.connect(self._handle_flop)
+                    self.fpmen.addAction(self.floppy_btn[flop_num])
+
+                    if self.fpbutton:
+                        self.fpman.setMenu(self.fpmen)
 
         print(self.disk_btn)
         print(self.floppy_btn)
+
+        self.menu.addSpacing(18)
+
+        self.menu.addWidget(self.cdman)
+        self.menu.addWidget(self.fpman)
 
         self.menu.addStretch()
 
@@ -117,7 +150,8 @@ class VNCWindow(QMainWindow):
             parent=self.viewer_widget,
             host="127.0.0.1", port=config["video"]["port"],
             readOnly=False,
-            autoResize= not self.resize_to_window
+            autoResize= not self.resize_to_window,
+            restrict= self.grabbing
         )
         self.viewer.onResize.connect(self._host_resize_event)
         self.viewer.setMouseTracking(False)
@@ -186,6 +220,7 @@ class VNCWindow(QMainWindow):
             self.viewer.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             self.setWindowTitle(f"{self.config["name"]} - VNC Viewer")
             self.grabbing = False
+            self.viewer.restricting = False
         else:
             self.viewer.setFocus()
             self.viewer.grabMouse()
@@ -195,6 +230,31 @@ class VNCWindow(QMainWindow):
             self.viewer.setMouseTracking(True)
             self.viewer.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
             self.grabbing = True
+            self.viewer.restricting = True
+
+    def _handle_pause(self):
+        self.paused = not self.paused
+        self.btn_pause.setDisabled(self.paused)
+        self.btn_resume.setEnabled(self.paused)
+        if self.onPause:
+            self.onPause(self.config["name"], self.paused)
+    
+    def _state_changed(self, name, state):
+        if name == self.config["name"]:
+            if (state.value == "paused" and not self.paused) or (state.value == "running" and self.paused):
+                print("External change (pause/resume)")
+                self._handle_pause()
+            
+            elif state.value == "stopped" or state.value == "killed" or state.value == "error":
+                print("Closing VNC window")
+                self.close()
+
+    def _handle_flop(self):
+        pass
+
+    def _handle_disk(self):
+        pass
+
 
     def mouseMoveEvent(self, a0):
         return super().mouseMoveEvent(a0)
@@ -202,6 +262,8 @@ class VNCWindow(QMainWindow):
     def mousePressEvent(self, a0):
         if self.grabbing:
             self.viewer.mousePressEvent(a0)
+        else:
+            self._handle_click()
         return super().mousePressEvent(a0)
     
     def mouseReleaseEvent(self, a0):

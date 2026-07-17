@@ -4,6 +4,7 @@ import os
 class VMMetadata:
     def __init__(self, path):
         self.path = path
+        os.makedirs(self.path, exist_ok=True)
 
     def save(self, data: dict, name):
         with open(f"{self.path}/{name}.json", "w", encoding="utf-8") as f:

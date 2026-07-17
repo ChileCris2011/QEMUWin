@@ -35,6 +35,8 @@ class VideoPage(QWidget):
         layout.addRow(connconfig)
 
         self.setLayout(layout)
+        self._handle_conn_change()
+        self._handle_auto_change()
 
     def _handle_auto_change(self):
         if self.auto_port.checkState() == Qt.CheckState.Checked:
@@ -55,12 +57,16 @@ class VideoPage(QWidget):
     def get_data(self):
         if self.connection.currentText == "QEMU":
             return {
-                "model": self.model.currentText(),
-                "connection": self.connection.currentText()
+                "video": {
+                    "model": self.model.currentText(),
+                    "connection": self.connection.currentText()
+                }
             }
         else:
             return {
-                "model": self.model.currentText(),
-                "connection": self.connection.currentText(),
-                "port": -1 if self.auto_port.checkState() == Qt.CheckState.Checked else self.vnc_port.value()
+                "video": {
+                    "model": self.model.currentText(),
+                    "connection": self.connection.currentText(),
+                    "port": -1 if self.auto_port.checkState() == Qt.CheckState.Checked else self.vnc_port.value()
+                }
             }
