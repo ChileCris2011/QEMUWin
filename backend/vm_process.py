@@ -38,24 +38,25 @@ class VMProcess:
 
         self._set_state(VMState.STARTING)
 
-        cmd = self._build_command()
-        self.process = subprocess.Popen(
-            cmd,
-            creationflags=subprocess.CREATE_NO_WINDOW,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-
-        threading.Thread(target=self._monitor, daemon=True).start()
-
         try:
+            cmd = self._build_command()
+            self.process = subprocess.Popen(
+                cmd,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+            threading.Thread(target=self._monitor, daemon=True).start()
+
             self.qmp = QMPClient("127.0.0.1", self.qmp_port)
 
             if not self.qmp._wait_for_qmp(port=self.qmp_port):
                 logging.error(f"Timeout for VM's QMP")
                 self._set_state(VMState.ERROR)
-                return
+                self._terminate_failed_start()
+                raise TimeoutError("Timed out waiting for VM QMP")
             self.qmp.connect()
 
             logging.info("VM Running")
@@ -74,9 +75,15 @@ class VMProcess:
         except ConnectionRefusedError as e:
             logging.error(f"Error Connecting to VM's QMP")
             self._set_state(VMState.ERROR)
+            self._terminate_failed_start()
 
             error = ErrorDialog("Error Connecting to VM's QMP", "".join(traceback.format_exception(e)))
             error.exec()
+            raise
+        except Exception:
+            self._set_state(VMState.ERROR)
+            self._terminate_failed_start()
+            raise
 
     def _build_command(self):
         settings = QSettings("QEMUWin", "QEMUWin")
@@ -105,25 +112,35 @@ class VMProcess:
 
         #print(cmd)
 
+        controllers = set()
+
         if self.config.get("storage"):
             for disk in self.config.get("storage"):
                 if os.path.exists(disk.get("path")):
                     dtype = disk.get("bus")
+                    disk_id = disk.get("id")
+                    disk_path = disk.get("path")
 
                     if dtype == "virtio":
-                        cmd += ["-device", "virtio-scsi-pci,id=scsi"]
-                        cmd += ["-drive", f"file={disk.get("path")},if=none,id=disk{disk.get("id")}"]
-                        cmd += ["-device", f"scsi-hd,drive=disk{disk.get("id")},bus=scsi.{disk.get("id")}"]
+                        if "virtio-scsi" not in controllers:
+                            cmd += ["-device", "virtio-scsi-pci,id=virtio_scsi"]
+                            controllers.add("virtio-scsi")
+                        cmd += ["-drive", f"file={disk_path},if=none,id=disk{disk_id}"]
+                        cmd += ["-device", f"scsi-hd,drive=disk{disk_id},bus=virtio_scsi.0"]
                     elif dtype == "scsi":
-                        cmd += ["-device", "lsi53c895a,id=scsi"]
-                        cmd += ["-drive", f"file={disk.get("path")},if=none,id=disk{disk.get("id")}"]
-                        cmd += ["-device", f"scsi-hd,drive=disk{disk.get("id")},bus=scsi.{disk.get("id")}"]
+                        if "lsi-scsi" not in controllers:
+                            cmd += ["-device", "lsi53c895a,id=lsi_scsi"]
+                            controllers.add("lsi-scsi")
+                        cmd += ["-drive", f"file={disk_path},if=none,id=disk{disk_id}"]
+                        cmd += ["-device", f"scsi-hd,drive=disk{disk_id},bus=lsi_scsi.0"]
                     elif dtype == "ide":
-                        cmd += ["-drive", f"file={disk.get("path")},if=ide"]
+                        cmd += ["-drive", f"file={disk_path},if=ide"]
                     elif dtype == "sata":
-                        cmd += ["-device", "ich9-ahci,id=ahci"]
-                        cmd += ["-drive", f"file={disk.get("path")},if=none,id=disk{disk.get("id")}"]
-                        cmd += ["-device", f"ide-hd,drive=disk{disk.get("id")},bus=ahci.{disk.get("id")}"]
+                        if "ahci" not in controllers:
+                            cmd += ["-device", "ich9-ahci,id=ahci"]
+                            controllers.add("ahci")
+                        cmd += ["-drive", f"file={disk_path},if=none,id=disk{disk_id}"]
+                        cmd += ["-device", f"ide-hd,drive=disk{disk_id},bus=ahci.{disk_id}"]
 
                     #cmd += ["-drive", f"media=disk,file={disk.get("path")},format={self._detect_format(disk.get("path"))},if={disk.get("bus")}"]
                 else:
@@ -287,7 +304,14 @@ class VMProcess:
 
         if code != 0:
             logging.error(f"QEMU exited with code {code}\n{stderr}")
-            raise OSError(f"QEMU exited with code {code}")
+
+    def _terminate_failed_start(self):
+        if self.qmp:
+            self.qmp.close()
+            self.qmp = None
+
+        if self.process and self.process.poll() is None:
+            self.process.terminate()
         
     def pause(self):
         if self.qmp:

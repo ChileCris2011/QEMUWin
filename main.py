@@ -16,9 +16,6 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-def rebuild_ui():
-    window._build_ui()
-
 if __name__ == "__main__":
 
     threading.excepthook = error_handler.thread_exception_hook
@@ -34,7 +31,6 @@ if __name__ == "__main__":
 
     theme_manager = ThemeManager(app)
     theme_manager.apply()
-    theme_manager.themeChanged.connect(rebuild_ui)
 
     manager = VMManager(app)
 

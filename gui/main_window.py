@@ -213,13 +213,13 @@ class MainWindow(QMainWindow):
 
     def _backend_state_changed(self, name, state):
         self.vm_state_changed.emit(name, state)
-        if self.vnc_window:
-            self.vnc_window._state_changed(name, state)
-        self._update_buttons()
 
 
     def _update_vm_ui(self, name, state):
         self.vm_list.update_vm_state(name, state.value)
+        if self.vnc_window:
+            self.vnc_window._state_changed(name, state)
+        self._update_buttons()
         print("Triggered list change")
 
     def _update_vm_files(self):

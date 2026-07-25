@@ -93,7 +93,11 @@ class VMManager:
 
         print(self.processes)
 
-        vm.start()
+        try:
+            vm.start()
+        except Exception:
+            self._remove_process(name)
+            raise
 
         return {
             "config": config,
@@ -125,14 +129,18 @@ class VMManager:
             self.on_vm_state_changed(name, state)
 
     def _vm_stopped(self, name):
-        if name in self.processes:
-            port = self.processes[name].qmp_port
-            self.port_manager.release_port(port)
-            del self.processes[name]
-            print(self.processes)
+        self._remove_process(name)
         
         if self.vm_stopped:
             self.vm_stopped(name)
+
+    def _remove_process(self, name):
+        if name in self.processes:
+            process = self.processes[name]
+            self.port_manager.release_port(process.qmp_port)
+            self.port_manager.release_port(process.vnc_port)
+            del self.processes[name]
+            print(self.processes)
 
     def get_state(self, name):
         if name in self.processes:
@@ -214,12 +222,14 @@ class VMManager:
         ]
 
         try:
-            command = subprocess.run(cmd, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
-        except FileNotFoundError:
+            command = subprocess.run(cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        except FileNotFoundError as e:
             logging.error("\'qemu-img\' is not accessible or doesn't exists")
+            raise RuntimeError("\'qemu-img\' is not accessible or doesn't exist") from e
 
         if command.returncode != 0:
             logging.error(command.stderr)
-            logging.error(command.stdout.decode())
+            logging.error(command.stdout)
+            raise RuntimeError(command.stderr or "Failed to create disk image")
         else:
-            logging.debug(command.stdout.decode())
+            logging.debug(command.stdout)
