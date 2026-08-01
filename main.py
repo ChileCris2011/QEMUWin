@@ -22,7 +22,7 @@ if __name__ == "__main__":
     sys.excepthook = error_handler.global_exception_hook
 
     logging.info("----------------------------")
-    logging.info("------- QEMUWin v1.2 -------")
+    logging.info("------- QEMUWin Nightly -------")
     logging.info("----------------------------")
 
     app = QApplication(sys.argv)
