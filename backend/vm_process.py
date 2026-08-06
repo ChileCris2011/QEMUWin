@@ -65,9 +65,7 @@ class VMProcess:
 
                     message = (
                         f"QEMU exited before QMP became available.\n"
-                        f"Exit code: {self.process.returncode}\n\n"
-                        f"STDOUT:\n{stdout}\n\n"
-                        f"STDERR:\n{stderr}"
+                        f"Exit code: {self.process.returncode}"
                     )
 
                     logging.error(message)
