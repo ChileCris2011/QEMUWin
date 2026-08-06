@@ -14,6 +14,18 @@ from gui.error_dialog import ErrorDialog
 
 
 class VMProcess:
+    AUDIO_BACKEND_ID = "qemuwin_audio"
+    AUDIO_DEVICE_ARGS = {
+        "ac97": ["-device", "AC97,audiodev={backend_id}"],
+        "adlib": ["-device", "adlib,audiodev={backend_id}"],
+        "cs4231a": ["-device", "cs4231a,audiodev={backend_id}"],
+        "es1370": ["-device", "ES1370,audiodev={backend_id}"],
+        "gus": ["-device", "gus,audiodev={backend_id}"],
+        "hda": ["-device", "intel-hda", "-device", "hda-duplex,audiodev={backend_id}"],
+        "sb16": ["-device", "sb16,audiodev={backend_id}"],
+        "virtio": ["-device", "virtio-sound-pci,audiodev={backend_id}"],
+    }
+
     def __init__(self, name, config, qmp_port, vnc_port=None):
         self.name = name
         self.config = config
@@ -322,7 +334,7 @@ class VMProcess:
                 f":{self.vnc_port - 5900}"
             ]
 
-        audio = self.config.get("audio")
+        self._add_audio_args(cmd)
 
         if audio and audio != "None":
             cmd += [
@@ -357,6 +369,23 @@ class VMProcess:
         )
 
         return cmd
+
+    def _add_audio_args(self, cmd):
+        audio_model = self.config.get("audio")
+        if not audio_model or audio_model == "None":
+            return
+
+        audio_model = audio_model.lower()
+        device_args = self.AUDIO_DEVICE_ARGS.get(audio_model)
+
+        if not device_args:
+            raise ValueError(f"Unsupported audio device: {audio_model}")
+
+        cmd += ["-audiodev", f"dsound,id={self.AUDIO_BACKEND_ID}"]
+        cmd += [
+            arg.format(backend_id=self.AUDIO_BACKEND_ID)
+            for arg in device_args
+        ]
 
     def _detect_format(self, path):
         try:
