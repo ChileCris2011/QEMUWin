@@ -12,6 +12,8 @@ from qvncwidget6 import QVNCWidget
 
 from gui.theme_manager import IconManager
 
+import time
+
 class VNCWindow(QMainWindow):
     def __init__(self, config, process, app=QApplication):
         super().__init__()
@@ -115,7 +117,7 @@ class VNCWindow(QMainWindow):
         
         self.viewer = QVNCWidget(
             parent=self.viewer_widget,
-            host="127.0.0.1", port=config["video"]["port"],
+            host="127.0.0.1", port=process.vnc_port,
             readOnly=False,
             autoResize= not self.resize_to_window,
             restrict= self.grabbing

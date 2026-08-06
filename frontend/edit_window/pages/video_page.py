@@ -26,10 +26,14 @@ class VideoPage(QWidget):
 
         self.vnc_port = QSpinBox()
         self.vnc_port.setRange(5900, 65535)
+        if config["port"] >= 5900:
+            self.vnc_port.setValue(config["video"]["port"])
         connconfig.addWidget(self.vnc_port)
 
         self.auto_port = QCheckBox("Auto Port")
         self.auto_port.checkStateChanged.connect(self._handle_auto_change)
+        if config["port"] < 5900:
+            self.auto_port.setChecked(True)
         connconfig.addWidget(self.auto_port)
 
         layout.addRow(connconfig)
