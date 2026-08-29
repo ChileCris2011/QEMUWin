@@ -17,6 +17,7 @@ class PageCpuMemory(QWizardPage):
         self.cores.setValue(2)
 
         self.memory = MemoryBar()
+        self.memory.setValue(256)
 
         self.cpu_model = QComboBox()
         self.cpu_model.addItems(["athlon", "core2duo", "coreduo", "kvm32", "kvm64", "n270", "pentium", "pentium2", "pentium3", "phenom", "qemu32", "qemu64", "base", "host", "max" , "486", "Broadwell", "Cascadelake-Server", "ClearwaterForest", "Conroe", "Cooperlake", "Denverton", "Dhyana", "EPYC", "EPIC-Genoa", "EPIC-IBPB", "EPYC-Milan", "EPYC-Rome", "EPIC-Turin", "GraniteRapids", "Haswell", "Icelake-Server", "IvyBridge", "KnightsMill", "Nehalem", "Opteron_G1", "Opteron_G2", "Opteron_G3", "Opteron_G4", "Opteron_G5", "Penryn", "SandyBridge", "SapphireRapids", "SierraForest", "Skylake-Client", "Skylake-Server", "Snowridge", "Westmere", "YongFeng"])
