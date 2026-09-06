@@ -336,11 +336,11 @@ class VMProcess:
 
         self._add_audio_args(cmd)
 
-        if audio and audio != "None":
-            cmd += [
-                "-audio",
-                f"driver=dsound,model={audio}"
-            ]
+        #if audio and audio != "None":
+        #    cmd += [
+        #        "-audio",
+        #        f"driver=dsound,model={audio}"
+        #    ]
 
         # Modern replacement for the removed/deprecated -usbdevice tablet.
         cmd += [

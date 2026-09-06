@@ -24,15 +24,17 @@ class VideoPage(QWidget):
         self.conn_label = QLabel("VNC port:")
         connconfig.addWidget(self.conn_label)
 
+        port = config.get("port", 5900)
+
         self.vnc_port = QSpinBox()
         self.vnc_port.setRange(5900, 65535)
-        if config["port"] >= 5900:
-            self.vnc_port.setValue(config["video"]["port"])
+        if port >= 5900:
+            self.vnc_port.setValue(port)
         connconfig.addWidget(self.vnc_port)
 
         self.auto_port = QCheckBox("Auto Port")
         self.auto_port.checkStateChanged.connect(self._handle_auto_change)
-        if config["port"] < 5900:
+        if port < 5900:
             self.auto_port.setChecked(True)
         connconfig.addWidget(self.auto_port)
 
@@ -59,7 +61,7 @@ class VideoPage(QWidget):
             self.auto_port.setVisible(True)
 
     def get_data(self):
-        if self.connection.currentText == "QEMU":
+        if self.connection.currentText() == "QEMU":
             return {
                 "video": {
                     "model": self.model.currentText(),
