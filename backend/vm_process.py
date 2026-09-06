@@ -75,13 +75,8 @@ class VMProcess:
                 if self.process.poll() is not None:
                     stdout, stderr = self.process.communicate()
 
-                    message = (
-                        f"QEMU exited before QMP became available.\n"
-                        f"Exit code: {self.process.returncode}"
-                    )
-
-                    logging.error(message)
-                    raise RuntimeError(message)
+                    logging.error(f"QEMU exited with code {self.process.returncode} before QMP became available.\n{stderr}")
+                    raise RuntimeError(stderr.replace(f"{cmd[0]}: ", "").capitalize()) #TODO: do not de-capitalize already capitalized letters (only make the first upper, the rest remain)
 
                 try:
                     if self.qmp._wait_for_qmp(port=self.qmp_port):
@@ -148,6 +143,9 @@ class VMProcess:
         else:
             executable = "qemu-system-x86_64.exe"
             logging.debug("Using QEMU from environment PATH")
+
+        if not os.path.exists(executable):
+            raise FileNotFoundError("QEMU executable does not exist or can't be accessed")
 
         cmd = [executable]
 
