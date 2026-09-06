@@ -1,15 +1,15 @@
-from PyQt6.QtWidgets import QWidget, QFormLayout, QSpinBox
-
+from PyQt6.QtWidgets import QWidget, QFormLayout, QHBoxLayout
+from gui.memorybar import MemoryBar
 
 class MemoryPage(QWidget):
     def __init__(self, vm_config):
         super().__init__()
 
         layout = QFormLayout()
-
-        self.memory = QSpinBox()
-        self.memory.setRange(256, 262144)
-        self.memory.setValue(vm_config.get("memory", 2048))
+        layout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        
+        self.memory = MemoryBar()
+        self.memory.setValue(vm_config.get("memory", 1))
 
         layout.addRow("Memory (MB):", self.memory)
 
@@ -17,5 +17,5 @@ class MemoryPage(QWidget):
 
     def get_data(self):
         return {
-            "memory": self.memory.value()
+            "memory": self.memory.slider.value()
         }

@@ -3,7 +3,7 @@
 ; Non-commercial use only
 
 #define MyAppName "QEMUWin"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.2.2"
 #define MyAppPublisher "ThevianDex, MekaGPT"
 #define MyAppURL "https://github.com/ChileCris2011/QEMUWin"
 #define MyAppExeName "QEMUWin.exe"

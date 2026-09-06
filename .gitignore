@@ -6,3 +6,5 @@ latest.log
 .vscode/
 __pycache__/
 Output/
+meta/*
+qvncwidget6*/

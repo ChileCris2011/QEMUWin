@@ -8,25 +8,21 @@ from gui.theme_manager import ThemeManager
 
 import backend.error_handling as error_handler
 
-import resources_rc
-
 open("./latest.log", "w", encoding="utf-8")
 
 logging.basicConfig(
     filename="latest.log",
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
-def rebuild_ui():
-    window._build_ui()
 
 if __name__ == "__main__":
 
     threading.excepthook = error_handler.thread_exception_hook
     sys.excepthook = error_handler.global_exception_hook
+
     logging.info("----------------------------")
-    logging.info("-------- QEMUWin V1 --------")
+    logging.info("------- QEMUWin Nightly -------")
     logging.info("----------------------------")
 
     app = QApplication(sys.argv)
@@ -35,12 +31,13 @@ if __name__ == "__main__":
 
     theme_manager = ThemeManager(app)
     theme_manager.apply()
-    theme_manager.themeChanged.connect(rebuild_ui)
 
-    manager = VMManager()
+    manager = VMManager(app)
 
     window = MainWindow(manager, app)
     window.show()
+
+    logging.debug("Showing window")
 
     settings = QSettings("QEMUWin", "QEMUWin")
     if settings.value("QEMUWin", 0) == 0:
@@ -57,4 +54,4 @@ if __name__ == "__main__":
 
     sys.exit(app.exec())
 
-# TODO: Pantalla embebida
+# TODO: Audio handler (VNC doesn't support audio), finish vncviewer ui (non-working buttons)
