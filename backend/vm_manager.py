@@ -53,6 +53,7 @@ class VMManager:
         self.config.delete_vm(name)
 
     def restore_vms(self):
+        restored = {}
         vms = self.list_vms()
         for name in vms:
             logging.debug(f"Trying to restore VM {name}")
@@ -64,13 +65,28 @@ class VMManager:
                 vm.on_state_changed = self._vm_state_changed
                 vm.on_stopped = self._vm_stopped
                 self.processes[name] = vm
+                restored[name] = {
+                    "config": config,
+                    "process": vm
+                }
                 logging.info(f"Restored VM {name}")
 
                 vm.on_state_changed(result.get("name"), VMState(result.get("state")))
+        return restored
+
+    def get_process_info(self, name):
+        if name not in self.processes:
+            return None
+
+        vm = self.processes[name]
+        return {
+            "config": vm.config,
+            "process": vm
+        }
 
     def start_vm(self, name):
         if name in self.processes:
-            return
+            return self.get_process_info(name)
 
         config = self.config.load_vm(name)
         if config.get("qmp_port"):

@@ -124,6 +124,8 @@ class VNCWindow(QMainWindow):
         )
         self.viewer.onResize.connect(self._host_resize_event)
         self.viewer.setMouseTracking(False)
+        self._viewer_mouse_press_event = self.viewer.mousePressEvent
+        self.viewer.mousePressEvent = self._handle_viewer_click
 
         self.viewer_layout.addWidget(self.viewer)
         self.viewer_layout.setContentsMargins(0, 0, 0, 0)
@@ -178,8 +180,17 @@ class VNCWindow(QMainWindow):
             self.viewer.setMinimumSize(size)
 
     def _handle_click(self, event: QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton and not self.grabbing:
+        if not self.grabbing:
             self._handle_grab()
+            event.accept()
+
+    def _handle_viewer_click(self, event: QMouseEvent):
+        if not self.grabbing:
+            self._handle_grab()
+            event.accept()
+            return
+
+        self._viewer_mouse_press_event(event)
     
     def _handle_grab(self):
         if self.grabbing:

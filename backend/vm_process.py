@@ -76,7 +76,9 @@ class VMProcess:
                     stdout, stderr = self.process.communicate()
 
                     logging.error(f"QEMU exited with code {self.process.returncode} before QMP became available.\n{stderr}")
-                    raise RuntimeError(stderr.replace(f"{cmd[0]}: ", "").capitalize()) #TODO: do not de-capitalize already capitalized letters (only make the first upper, the rest remain)
+
+                    message = stderr.replace(f"{cmd[0]}: ", "")
+                    raise RuntimeError(message[:1].upper() + message[1:])
 
                 try:
                     if self.qmp._wait_for_qmp(port=self.qmp_port):
@@ -341,12 +343,16 @@ class VMProcess:
         #    ]
 
         # Modern replacement for the removed/deprecated -usbdevice tablet.
+
+        #cmd += ["-usbdevice", "tablet"]
+
         cmd += [
             "-device",
-            "qemu-xhci,id=usb",
+            "qemu-xhci,id=usbtablet",
             "-device",
-            "usb-tablet,bus=usb.0"
+            "usb-tablet,bus=usbtablet.0"
         ]
+
 
         boot_order = self.config.get("boot")
         if boot_order:
@@ -424,6 +430,10 @@ class VMProcess:
 
         if event_name == "SHUTDOWN":
             self._set_state(VMState.STOPPED)
+            self.metadata.delete(self.name)
+
+            if self.on_stopped:
+                self.on_stopped(self.name)
 
         elif event_name == "STOP":
             self._set_state(VMState.PAUSED)
@@ -450,6 +460,7 @@ class VMProcess:
 
             self.qmp = qmp
             self.qmp_port = qmp_port
+            self.vnc_port = data.get("vnc_port")
 
             if run_state == "running":
                 self._set_state(VMState.RUNNING)
@@ -460,8 +471,13 @@ class VMProcess:
                 active_state = "paused"
 
             else:
-                self._set_state(VMState.STOPPED)
-                active_state = "stopped"
+                logging.info(
+                    "Restoring VM %s with QMP status %s as paused",
+                    self.name,
+                    run_state
+                )
+                self._set_state(VMState.PAUSED)
+                active_state = "paused"
 
             self.qmp.add_event_listener(self._handle_qmp_event)
 

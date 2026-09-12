@@ -53,7 +53,7 @@ class MainWindow(QMainWindow):
             erdiag.exec()
             logging.exception(error_trace)
 
-        self.manager.restore_vms()
+        self.process.update(self.manager.restore_vms())
         logging.debug("VMs restored")
         
 
@@ -335,7 +335,11 @@ class MainWindow(QMainWindow):
         conf = self.config_man.load_vm(name)
 
         if not self.process.get(name, ""):
-            self._start()
+            restored_process = self.manager.get_process_info(name)
+            if restored_process:
+                self.process[name] = restored_process
+            else:
+                self._start()
 
         if conf["video"]["connection"] != "VNC":
             return
