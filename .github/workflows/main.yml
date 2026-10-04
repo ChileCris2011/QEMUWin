@@ -12,6 +12,7 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    if: (github.ref_type == 'tag' && contains(github.ref_name, '-')) || github.ref_type == 'branch'
 
     steps:
       - name: Checkout
