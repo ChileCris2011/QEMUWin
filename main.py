@@ -22,9 +22,9 @@ if __name__ == "__main__":
     threading.excepthook = error_handler.thread_exception_hook
     sys.excepthook = error_handler.global_exception_hook
 
-    logging.info("------------------------------")
+    logging.info("-"*(len(APP_VERSION) + 25))
     logging.info("------- QEMUWin v%s -------", APP_VERSION)
-    logging.info("------------------------------")
+    logging.info("-"*(len(APP_VERSION) + 25))
 
     app = QApplication(sys.argv)
     
