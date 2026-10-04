@@ -1,4 +1,5 @@
 import sys, threading, logging
+from app_version import APP_VERSION
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QSettings
 from PyQt6.QtGui import QIcon
@@ -21,9 +22,9 @@ if __name__ == "__main__":
     threading.excepthook = error_handler.thread_exception_hook
     sys.excepthook = error_handler.global_exception_hook
 
-    logging.info("----------------------------")
-    logging.info("------- QEMUWin Nightly -------")
-    logging.info("----------------------------")
+    logging.info("------------------------------")
+    logging.info("------- QEMUWin v%s -------", APP_VERSION)
+    logging.info("------------------------------")
 
     app = QApplication(sys.argv)
     

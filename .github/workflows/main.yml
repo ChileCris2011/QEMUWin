@@ -15,11 +15,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
         
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.14"
+
+      - name: Generate version metadata
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_EVENT_NAME -eq 'push' -and $env:GITHUB_REF_TYPE -eq 'tag') {
+            python tools/generate_version.py --release-tag "$env:GITHUB_REF_NAME"
+          } else {
+            python tools/generate_version.py
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Install Dependencies
         run: |
@@ -37,10 +50,17 @@ jobs:
         run: |
           iscc installer.iss
 
+      - name: Upload manual build
+        if: github.event_name != 'push' || github.ref_type != 'tag'
+        uses: actions/upload-artifact@v7
+        with:
+          path: Output
+
       - name: Create Release
+        if: github.event_name == 'push' && github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
           name: QEMU Manager ${{ github.ref_name }}
           draft: true
-          prerelease: false
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
           files: Output/QEMUWin_Setup.exe

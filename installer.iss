@@ -3,7 +3,10 @@
 ; Non-commercial use only
 
 #define MyAppName "QEMUWin"
-#define MyAppVersion "1.2.2"
+#ifnexist "build\version\version.iss"
+  #error "Missing version metadata. Run python tools/generate_version.py before compiling."
+#endif
+#include "build\version\version.iss"
 #define MyAppPublisher "ThevianDex, MekaGPT"
 #define MyAppURL "https://github.com/ChileCris2011/QEMUWin"
 #define MyAppExeName "QEMUWin.exe"

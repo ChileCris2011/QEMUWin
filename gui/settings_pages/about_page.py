@@ -1,4 +1,5 @@
 import math
+from app_version import APP_VERSION
 
 from PyQt6.QtCore import (
     QElapsedTimer,
@@ -236,3 +237,4 @@ class AboutPage(QWidget):
         )
 
         layout.addStretch()
+        layout.addWidget(QLabel(f"v{APP_VERSION}"), alignment=Qt.AlignmentFlag.AlignRight)
