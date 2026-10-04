@@ -3,6 +3,7 @@ name: Build Release
 on:
   push:
       tags: "v*"
+      branches: release
   workflow_dispatch:
 
 permissions:
@@ -11,6 +12,7 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    if: (github.ref_type == 'tag' && contains(github.ref_name, '-')) || (github.ref_type == 'branch' && github.ref_name == 'release')
 
     steps:
       - name: Checkout
