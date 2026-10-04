@@ -1,12 +1,11 @@
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QApplication,
+    QMainWindow, QWidget, QVBoxLayout, QApplication, QCheckBox,
     QPushButton, QHBoxLayout, QLabel, QMessageBox, QProgressDialog
 )
 from PyQt6.QtCore import pyqtSignal, Qt
 
 from frontend.create_wizard.create_vm_wizard import CreateVMWizard
 from frontend.edit_window.edit_vm_window import EditVMWindow
-from frontend.vnc_viewer.vnc_window import VNCWindow
 
 from backend.config_manager import ConfigManager
 
@@ -15,7 +14,7 @@ from gui.theme_manager import IconManager, ThemeManager
 from gui.settings import SettingsDialog
 from gui.error_dialog import ErrorDialog
 
-import logging
+import logging, os
 
 class MainWindow(QMainWindow):
 
@@ -31,12 +30,11 @@ class MainWindow(QMainWindow):
         self._update_vm_files()
 
         self.process = {}
-        self.vnc_window = None
 
         self.icon_manager = IconManager(mode="dark", app=self.app)
         self.theme_manager = ThemeManager(self.app)
 
-        self.setWindowTitle("QEMU Manager")
+        self.setWindowTitle("QEMUWin Manager")
         self.resize(800, 500)
 
         self._build_ui()
@@ -194,6 +192,21 @@ class MainWindow(QMainWindow):
             )
             return
 
+
+        #mesbox = QMessageBox()
+        #mesbox.setIcon(QMessageBox.Icon.Question)
+        #mesbox.setWindowTitle("Delete VM")
+        #mesbox.setText(f"Are you sure you want to delete '{name}'?")
+        #mesbox.setStandardButtons(
+        #    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        #)
+
+        #chbox = QCheckBox("Delete VM's virtual disk")
+        #mesbox.setCheckBox(chbox)
+
+        #reply = mesbox.exec()
+        #check = chbox.isChecked()
+
         reply = QMessageBox.question(
             self,
             "Delete VM",
@@ -202,6 +215,13 @@ class MainWindow(QMainWindow):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
+            #if check:
+            #    conf = self.config_man.load_vm(name)
+            #    drives = conf.get("storage", [])
+            #    for drive in drives:
+            #        path = drive.get("path", None)
+            #        if path and os.path.exists(path):
+            #            os.remove(path)
             self.manager.delete_vm(name)
             self.vm_list.refresh()
 
@@ -217,8 +237,6 @@ class MainWindow(QMainWindow):
 
     def _update_vm_ui(self, name, state):
         self.vm_list.update_vm_state(name, state.value)
-        if self.vnc_window:
-            self.vnc_window._state_changed(name, state)
         self._update_buttons()
         print("Triggered list change")
 
@@ -332,7 +350,8 @@ class MainWindow(QMainWindow):
 
     def _manage_double(self):
         name = self.vm_list.get_selected()
-        conf = self.config_man.load_vm(name)
+        if not name:
+            return
 
         if not self.process.get(name, ""):
             restored_process = self.manager.get_process_info(name)
@@ -341,27 +360,6 @@ class MainWindow(QMainWindow):
             else:
                 self._start()
 
-        if conf["video"]["connection"] != "VNC":
-            return
-        
-        if self.vnc_window:
-            self.vnc_window.close()
-            self.vnc_window.onPause = None
-            self.vnc_window = None
-
-        try:
-            self.vnc_window = VNCWindow(self.process[name]["config"], self.process[name]["process"], self.app)
-            self.vnc_window.onPause = self._handle_pause
-            self.vnc_window.onChangeMedia = self._handle_media_change
-            self.vnc_window.destroyed.connect(self._closed_vnc)
-            self.vnc_window.show()
-        except TypeError:
-            logging.warning(f"Tried to open {name} VM's VNC, but is not found...")
-    
-    def _closed_vnc(self):
-        self.vnc_window.onPause = None
-        self.vnc_window.onChangeMedia = None
-        self.vnc_window = None
 
     def _start_click(self):
         if self.btn_start.text() == "Stop":
@@ -379,15 +377,7 @@ class MainWindow(QMainWindow):
 
     def _handle_stop(self, name):
         if self.process.pop(name, False):
-            logging.debug(f"Removed VM {name} VNC process")
+            logging.debug(f"Removed VM {name} process")
         else:
             logging.debug(f"Aparently, {name} doesn't exists...")
     
-    def _handle_pause(self, name, paused):
-        if paused:
-            self.manager.pause_vm(name)
-        else:
-            self.manager.resume_vm(name)
-
-    def _handle_media_change(self, name, media):
-        self.manager.change_media(name, media)

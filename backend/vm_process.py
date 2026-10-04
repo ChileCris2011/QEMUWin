@@ -26,11 +26,10 @@ class VMProcess:
         "virtio": ["-device", "virtio-sound-pci,audiodev={backend_id}"],
     }
 
-    def __init__(self, name, config, qmp_port, vnc_port=None):
+    def __init__(self, name, config, qmp_port):
         self.name = name
         self.config = config
         self.qmp_port = qmp_port
-        self.vnc_port = vnc_port
 
         self.process = None
         self.state = VMState.STOPPED
@@ -102,7 +101,6 @@ class VMProcess:
                 {
                     "name": self.name,
                     "qmp_port": self.qmp_port,
-                    "vnc_port": self.vnc_port,
                     "pid": self.process.pid,
                     "started_by_manager": True,
                     "last_state": "RUNNING"
@@ -319,22 +317,6 @@ class VMProcess:
 
         cmd += ["-vga", str(video_model)]
 
-        if video.get("connection") == "VNC":
-            if self.vnc_port is None:
-                raise ValueError(
-                    "A VNC port was not assigned to the VM"
-                )
-
-            if self.vnc_port < 5900:
-                raise ValueError(
-                    "VNC port must be 5900 or greater"
-                )
-
-            cmd += [
-                "-vnc",
-                f":{self.vnc_port - 5900}"
-            ]
-
         self._add_audio_args(cmd)
 
         #if audio and audio != "None":
@@ -456,7 +438,6 @@ class VMProcess:
 
             self.qmp = qmp
             self.qmp_port = qmp_port
-            self.vnc_port = data.get("vnc_port")
 
             if run_state == "running":
                 self._set_state(VMState.RUNNING)
@@ -501,7 +482,7 @@ class VMProcess:
         try:
             response = self.qmp.query_mice()
             mice = response.get("return", [])
-            logging.info("QEMU mouse devices: %s", mice)
+            logging.debug("QEMU mouse devices: %s", mice)
 
             absolute_mouse = next(
                 (mouse for mouse in mice if mouse.get("absolute")),
@@ -516,20 +497,20 @@ class VMProcess:
                 return
 
             if absolute_mouse.get("current"):
-                logging.info(
+                logging.degub(
                     "QEMU is already using absolute mouse input: %s",
                     absolute_mouse.get("name")
                 )
                 return
 
             self.qmp.set_mouse(absolute_mouse["index"])
-            logging.info(
+            logging.degib(
                 "Selected absolute QEMU mouse input: %s",
                 absolute_mouse.get("name")
             )
 
         except Exception:
-            logging.exception("Failed to query or select QEMU mouse device")
+            logging.error("Failed to query or select QEMU mouse device")
 
     def _monitor(self):
         if not self.process:

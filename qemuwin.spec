@@ -22,8 +22,7 @@ a = Analysis(
     hiddenimports=[
         "PyQt6.QtCore",
         "PyQt6.QtGui",
-        "PyQt6.QtWidgets",
-        "qvncwidget6"
+        "PyQt6.QtWidgets"
     ],
     excludes=[
         "PyQt6.QtWebEngineWidgets",

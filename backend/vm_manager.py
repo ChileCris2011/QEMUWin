@@ -13,7 +13,6 @@ class VMManager:
         self.port_manager = PortManager()
 
         self.app = app
-        self.vnc_window = None
 
         self.on_vm_state_changed = None
         self.vm_stopped = None
@@ -58,7 +57,7 @@ class VMManager:
         for name in vms:
             logging.debug(f"Trying to restore VM {name}")
             config = self.config.load_vm(name)
-            vm = VMProcess(name, config, None, None)
+            vm = VMProcess(name, config, None)
             logging.debug("...")
             result = vm.restore_vm()
             if result:
@@ -94,14 +93,8 @@ class VMManager:
         else:
             qmp_port = self.port_manager.get_free_port(4444)
 
-        if config["video"]["connection"] == "VNC":
-            vnc_port = config["video"].get("port", 0)
-            if vnc_port < 5900:
-                vnc_port = self.port_manager.get_free_port(5900)
-        else:
-            vnc_port = None
 
-        vm = VMProcess(name, config, qmp_port, vnc_port)
+        vm = VMProcess(name, config, qmp_port)
         vm.on_state_changed = self._vm_state_changed
         vm.on_stopped = self._vm_stopped
 
@@ -154,7 +147,6 @@ class VMManager:
         if name in self.processes:
             process = self.processes[name]
             self.port_manager.release_port(process.qmp_port)
-            self.port_manager.release_port(process.vnc_port)
             del self.processes[name]
             print(self.processes)
 

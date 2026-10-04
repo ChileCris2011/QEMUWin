@@ -98,13 +98,14 @@ class MemoryBar(QWidget):
         self.side_ram = QSpinBox()
         self.side_ram.setMinimum(1)
         self.side_ram.setMaximum(self.listram["total"])
-        self.side_ram.setMinimumWidth(100)
+        self.side_ram.setMinimumWidth(75)
 
         self.slider.sliderMoved.connect(self._handle_change_slide)
         self.slider.sliderReleased.connect(self._handle_change_slide)
         self.side_ram.valueChanged.connect(self._handle_change_spin)
 
         layout.addWidget(self.side_ram)
+        layout.addWidget(QLabel("MiB"))
 
         self.setLayout(layout)
 

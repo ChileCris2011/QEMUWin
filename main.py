@@ -12,7 +12,7 @@ open("./latest.log", "w", encoding="utf-8")
 
 logging.basicConfig(
     filename="latest.log",
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
@@ -54,4 +54,3 @@ if __name__ == "__main__":
 
     sys.exit(app.exec())
 
-# TODO: Audio handler (VNC doesn't support audio), finish vncviewer ui (non-working buttons)
