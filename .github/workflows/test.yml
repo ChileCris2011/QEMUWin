@@ -2,7 +2,7 @@ name: Build Latest
 on:
   push:
     branches: latest
-    tags: "v*"
+    tags: "v*-*"
   pull_request:
     branches: latest
     types:
