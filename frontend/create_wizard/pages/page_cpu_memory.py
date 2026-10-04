@@ -25,7 +25,7 @@ class PageCpuMemory(QWizardPage):
 
         layout.addRow("CPU Model:", self.cpu_model)
         layout.addRow("Cores:", self.cores)
-        layout.addRow("Memory (MB):", self.memory)
+        layout.addRow("Memory:", self.memory)
 
         self.setLayout(layout)
 

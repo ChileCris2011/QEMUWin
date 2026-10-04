@@ -26,11 +26,10 @@ class VMProcess:
         "virtio": ["-device", "virtio-sound-pci,audiodev={backend_id}"],
     }
 
-    def __init__(self, name, config, qmp_port, vnc_port=None):
+    def __init__(self, name, config, qmp_port):
         self.name = name
         self.config = config
         self.qmp_port = qmp_port
-        self.vnc_port = vnc_port
 
         self.process = None
         self.state = VMState.STOPPED
@@ -75,13 +74,10 @@ class VMProcess:
                 if self.process.poll() is not None:
                     stdout, stderr = self.process.communicate()
 
-                    message = (
-                        f"QEMU exited before QMP became available.\n"
-                        f"Exit code: {self.process.returncode}"
-                    )
+                    logging.error(f"QEMU exited with code {self.process.returncode} before QMP became available.\n{stderr}")
 
-                    logging.error(message)
-                    raise RuntimeError(message)
+                    message = stderr.replace(f"{cmd[0]}: ", "")
+                    raise RuntimeError(message[:1].upper() + message[1:])
 
                 try:
                     if self.qmp._wait_for_qmp(port=self.qmp_port):
@@ -99,12 +95,12 @@ class VMProcess:
             self._set_state(VMState.RUNNING)
 
             self.qmp.add_event_listener(self._handle_qmp_event)
+            self._prefer_absolute_mouse()
 
             self.metadata.save(
                 {
                     "name": self.name,
                     "qmp_port": self.qmp_port,
-                    "vnc_port": self.vnc_port,
                     "pid": self.process.pid,
                     "started_by_manager": True,
                     "last_state": "RUNNING"
@@ -148,6 +144,9 @@ class VMProcess:
         else:
             executable = "qemu-system-x86_64.exe"
             logging.debug("Using QEMU from environment PATH")
+
+        if not os.path.exists(executable):
+            raise FileNotFoundError("QEMU executable does not exist or can't be accessed")
 
         cmd = [executable]
 
@@ -318,22 +317,6 @@ class VMProcess:
 
         cmd += ["-vga", str(video_model)]
 
-        if video.get("connection") == "VNC":
-            if self.vnc_port is None:
-                raise ValueError(
-                    "A VNC port was not assigned to the VM"
-                )
-
-            if self.vnc_port < 5900:
-                raise ValueError(
-                    "VNC port must be 5900 or greater"
-                )
-
-            cmd += [
-                "-vnc",
-                f":{self.vnc_port - 5900}"
-            ]
-
         self._add_audio_args(cmd)
 
         #if audio and audio != "None":
@@ -342,13 +325,12 @@ class VMProcess:
         #        f"driver=dsound,model={audio}"
         #    ]
 
-        # Modern replacement for the removed/deprecated -usbdevice tablet.
         cmd += [
+            "-usb",
             "-device",
-            "qemu-xhci,id=usb",
-            "-device",
-            "usb-tablet,bus=usb.0"
+            "usb-tablet"
         ]
+
 
         boot_order = self.config.get("boot")
         if boot_order:
@@ -426,6 +408,10 @@ class VMProcess:
 
         if event_name == "SHUTDOWN":
             self._set_state(VMState.STOPPED)
+            self.metadata.delete(self.name)
+
+            if self.on_stopped:
+                self.on_stopped(self.name)
 
         elif event_name == "STOP":
             self._set_state(VMState.PAUSED)
@@ -462,10 +448,16 @@ class VMProcess:
                 active_state = "paused"
 
             else:
-                self._set_state(VMState.STOPPED)
-                active_state = "stopped"
+                logging.info(
+                    "Restoring VM %s with QMP status %s as paused",
+                    self.name,
+                    run_state
+                )
+                self._set_state(VMState.PAUSED)
+                active_state = "paused"
 
             self.qmp.add_event_listener(self._handle_qmp_event)
+            self._prefer_absolute_mouse()
 
             return {
                 "name": data["name"],
@@ -482,6 +474,43 @@ class VMProcess:
         self._set_state(VMState.STOPPED)
 
         return None
+
+    def _prefer_absolute_mouse(self):
+        if not self.qmp:
+            return
+
+        try:
+            response = self.qmp.query_mice()
+            mice = response.get("return", [])
+            logging.debug("QEMU mouse devices: %s", mice)
+
+            absolute_mouse = next(
+                (mouse for mouse in mice if mouse.get("absolute")),
+                None
+            )
+
+            if not absolute_mouse:
+                logging.warning(
+                    "QEMU did not report an absolute mouse device. "
+                    "The guest will use relative PS/2 mouse input."
+                )
+                return
+
+            if absolute_mouse.get("current"):
+                logging.degub(
+                    "QEMU is already using absolute mouse input: %s",
+                    absolute_mouse.get("name")
+                )
+                return
+
+            self.qmp.set_mouse(absolute_mouse["index"])
+            logging.degib(
+                "Selected absolute QEMU mouse input: %s",
+                absolute_mouse.get("name")
+            )
+
+        except Exception:
+            logging.error("Failed to query or select QEMU mouse device")
 
     def _monitor(self):
         if not self.process:

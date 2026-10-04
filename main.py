@@ -1,4 +1,5 @@
 import sys, threading, logging
+from app_version import APP_VERSION
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QSettings
 from PyQt6.QtGui import QIcon
@@ -12,7 +13,7 @@ open("./latest.log", "w", encoding="utf-8")
 
 logging.basicConfig(
     filename="latest.log",
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
@@ -21,9 +22,9 @@ if __name__ == "__main__":
     threading.excepthook = error_handler.thread_exception_hook
     sys.excepthook = error_handler.global_exception_hook
 
-    logging.info("----------------------------")
-    logging.info("------- QEMUWin Nightly -------")
-    logging.info("----------------------------")
+    logging.info("-"*(len(APP_VERSION) + 25))
+    logging.info("------- QEMUWin v%s -------", APP_VERSION)
+    logging.info("-"*(len(APP_VERSION) + 25))
 
     app = QApplication(sys.argv)
     
@@ -54,4 +55,3 @@ if __name__ == "__main__":
 
     sys.exit(app.exec())
 
-# TODO: Audio handler (VNC doesn't support audio), finish vncviewer ui (non-working buttons)

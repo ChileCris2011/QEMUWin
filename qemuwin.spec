@@ -1,6 +1,11 @@
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT
 import os
+from pathlib import Path
 import PyQt6
+
+version_snapshot = Path(SPECPATH) / "build" / "version" / "build_version.json"
+if not version_snapshot.is_file():
+    raise RuntimeError("Missing version metadata. Run python tools/generate_version.py before packaging.")
 
 block_cipher = None
 
@@ -18,12 +23,11 @@ a = Analysis(
     ["main.py"],
     pathex=[],
     binaries=qt_plugins,
-    datas=[],
+    datas=[(str(version_snapshot), ".")],
     hiddenimports=[
         "PyQt6.QtCore",
         "PyQt6.QtGui",
-        "PyQt6.QtWidgets",
-        "qvncwidget6"
+        "PyQt6.QtWidgets"
     ],
     excludes=[
         "PyQt6.QtWebEngineWidgets",

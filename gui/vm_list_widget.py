@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QListWidget, QListWidgetItem, QMenu, QMessageBox
+from PyQt6.QtWidgets import QListWidget, QListWidgetItem, QMenu, QMessageBox, QWidget
 from gui.vm_item_widget import VMItemWidget, DummyItem
 
 class VMListWidget(QListWidget):
@@ -33,6 +33,8 @@ class VMListWidget(QListWidget):
         else:
             dummy_item = QListWidgetItem()
             dummy_widget = DummyItem("vmEmpty", "No Machines added. Start creating a machine!")
+            dummy_item.setSizeHint(dummy_widget.sizeHint())
+            dummy_item.setFlags(dummy_item.flags() & ~Qt.ItemFlag.ItemIsSelectable & ~Qt.ItemFlag.ItemIsEnabled)
             self.addItem(dummy_item)
             self.setItemWidget(dummy_item, dummy_widget)
     
@@ -41,7 +43,7 @@ class VMListWidget(QListWidget):
         item = self.currentItem()
         if item:
             widget = self.itemWidget(item)
-            return widget.name_label.text()
+            return None if isinstance(widget, DummyItem) else widget.name_label.text()
         return None
     
     def update_vm_state(self, name, state):

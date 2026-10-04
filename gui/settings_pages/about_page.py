@@ -1,4 +1,5 @@
 import math
+from app_version import APP_VERSION
 
 from PyQt6.QtCore import (
     QElapsedTimer,
@@ -23,10 +24,11 @@ from PyQt6.QtWidgets import (
 
 
 class WaveTextWidget(QWidget):
-    def __init__(self, text, parent=None):
+    def __init__(self, text, theme, parent=None):
         super().__init__(parent)
 
         self.text = text
+        self.theme = theme
 
         # Wave settings
         self.amplitude = 4.0
@@ -111,9 +113,7 @@ class WaveTextWidget(QWidget):
             )
 
             image_painter.setFont(scaled_font)
-            image_painter.setPen(
-                QColor(255, 255, 255)
-            )
+            image_painter.setPen(Qt.GlobalColor.white if self.theme == "dark" else Qt.GlobalColor.black)
 
             metrics = QFontMetricsF(scaled_font)
 
@@ -201,7 +201,7 @@ class WaveTextWidget(QWidget):
 
 
 class AboutPage(QWidget):
-    def __init__(self):
+    def __init__(self, theme):
         super().__init__()
 
         layout = QVBoxLayout(self)
@@ -216,15 +216,8 @@ class AboutPage(QWidget):
         qemuwin.setAlignment(
             Qt.AlignmentFlag.AlignCenter
         )
-        qemuwin.setStyleSheet(
-            """
-            QLabel {
-                color: white;
-                font-size: 24px;
-                font-weight: bold;
-            }
-            """
-        )
+        qemuwin.setStyleSheet(f"color: {"black" if theme == "light" else "white"}; font-size: 24px; font-weight: bold;")
+
 
         qemuwin_layout.addWidget(qemuwin)
         qemuwin_layout.addStretch()
@@ -234,6 +227,7 @@ class AboutPage(QWidget):
         # Smooth animated author text
         self.author_text = WaveTextWidget(
             "by: ChileCris2011",
+            theme,
             self
         )
 
@@ -243,3 +237,4 @@ class AboutPage(QWidget):
         )
 
         layout.addStretch()
+        layout.addWidget(QLabel(f"v{APP_VERSION}"), alignment=Qt.AlignmentFlag.AlignRight)
