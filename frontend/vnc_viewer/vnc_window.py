@@ -5,14 +5,92 @@ from PyQt6.QtWidgets import (
     QScrollArea, QMenu, QMessageBox,
     QFileDialog
 )
-from PyQt6.QtGui import QAction, QResizeEvent, QMouseEvent, QShortcut, QKeySequence, QCursor, QKeyEvent
+from PyQt6.QtGui import QAction, QResizeEvent, QMouseEvent, QShortcut, QKeySequence, QKeyEvent, QPaintEvent, QPainter
 
-from PyQt6.QtCore import QSize, Qt, QPointF, QEvent
-from qvncwidget6 import QVNCWidget
+from PyQt6.QtCore import QSize, Qt, QPointF, QRectF, QEvent
+
+from alibs.qvncwidget6.qvncwidget6 import QVNCWidget # type: ignore
+from alibs.qvncwidget6.rfbhelpers import RFBInput # type: ignore
+
+#from qvncwidget6 import QVNCWidget
+#from qvncwidget6.rfbhelpers import RFBInput
 
 from gui.theme_manager import IconManager
 
 import time
+
+class AbsoluteQVNCWidget(QVNCWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.framebuffer_rect = QRectF()
+        self.input_grabbed = False
+
+    def _update_cursor(self):
+        return
+
+    def set_input_grabbed(self, grabbed: bool):
+        self.input_grabbed = grabbed
+        if hasattr(self, "setInputGrabbed"):
+            self.setInputGrabbed(grabbed)
+        self.setMouseTracking(grabbed)
+
+    def paintEvent(self, event: QPaintEvent):
+        painter = QPainter(self)
+
+        if self.backbuffer is None:
+            painter.fillRect(0, 0, self.width(), self.height(), Qt.GlobalColor.black)
+        else:
+            self.frontbuffer = self.backbuffer.scaled(
+                self.width(),
+                self.height(),
+                Qt.AspectRatioMode.IgnoreAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            self.framebuffer_rect = self._current_framebuffer_rect()
+            painter.drawImage(self.framebuffer_rect.topLeft(), self.frontbuffer)
+
+        painter.end()
+
+    def mousePressEvent(self, event: QMouseEvent):
+        if self.readOnly or not self.frontbuffer or not self.input_grabbed:
+            return
+
+        self.mouseButtonMask = RFBInput.fromQMouseEvent(event, True, self.mouseButtonMask)
+        self.pointerEvent(*self._get_remote_mouse_event(event), self.mouseButtonMask)
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        if self.readOnly or not self.frontbuffer or not self.input_grabbed:
+            return
+
+        self.mouseButtonMask = RFBInput.fromQMouseEvent(event, False, self.mouseButtonMask)
+        self.pointerEvent(*self._get_remote_mouse_event(event), self.mouseButtonMask)
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        if self.readOnly or not self.frontbuffer or not self.input_grabbed:
+            return
+
+        self.pointerEvent(*self._get_remote_mouse_event(event), self.mouseButtonMask)
+
+    def _get_remote_mouse_event(self, event: QMouseEvent):
+        return self._get_remote_pos(QPointF(self.mapFromGlobal(event.globalPosition().toPoint())))
+
+    def _get_remote_pos(self, pos: QPointF):
+        self.framebuffer_rect = self._current_framebuffer_rect()
+        if self.framebuffer_rect.width() <= 0 or self.framebuffer_rect.height() <= 0:
+            return 0, 0
+
+        x = min(max(pos.x(), self.framebuffer_rect.left()), self.framebuffer_rect.right())
+        y = min(max(pos.y(), self.framebuffer_rect.top()), self.framebuffer_rect.bottom())
+        x_pos = ((x - self.framebuffer_rect.left()) / self.framebuffer_rect.width()) * self.vncWidth
+        y_pos = ((y - self.framebuffer_rect.top()) / self.framebuffer_rect.height()) * self.vncHeight
+
+        remote_x = min(max(int(x_pos), 0), self.vncWidth - 1)
+        remote_y = min(max(int(y_pos), 0), self.vncHeight - 1)
+
+        return remote_x, remote_y
+
+    def _current_framebuffer_rect(self):
+        return QRectF(0, 0, self.width(), self.height())
 
 class VNCWindow(QMainWindow):
     def __init__(self, config, process, app=QApplication):
@@ -33,9 +111,6 @@ class VNCWindow(QMainWindow):
 
         self.oppened = True
         self.resize_to_window = False
-
-        self.start_pos = QCursor.pos()
-        self.virtual_pos = QCursor.pos()
 
         self.ignore_next_event = False
 
@@ -115,15 +190,17 @@ class VNCWindow(QMainWindow):
         
         self.viewer_layout = QHBoxLayout(self.viewer_widget)
         
-        self.viewer = QVNCWidget(
+        self.viewer = AbsoluteQVNCWidget(
             parent=self.viewer_widget,
             host="127.0.0.1", port=process.vnc_port,
             readOnly=False,
             autoResize= not self.resize_to_window,
-            restrict= self.grabbing
+            restrict=False
         )
+        if hasattr(self.viewer, "setAbsolutePointer"):
+            self.viewer.setAbsolutePointer(True)
         self.viewer.onResize.connect(self._host_resize_event)
-        self.viewer.setMouseTracking(False)
+        self.viewer.set_input_grabbed(False)
         self._viewer_mouse_press_event = self.viewer.mousePressEvent
         self.viewer.mousePressEvent = self._handle_viewer_click
 
@@ -187,32 +264,26 @@ class VNCWindow(QMainWindow):
     def _handle_viewer_click(self, event: QMouseEvent):
         if not self.grabbing:
             self._handle_grab()
-            event.accept()
-            return
 
         self._viewer_mouse_press_event(event)
+        event.accept()
     
     def _handle_grab(self):
         if self.grabbing:
             self.viewer.releaseMouse()
             self.viewer.releaseKeyboard()
-            self.setCursor(Qt.CursorShape.ArrowCursor)
-            self.viewer.setMouseTracking(False)
+            self.viewer.set_input_grabbed(False)
             self.viewer.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             self.setWindowTitle(f"{self.config["name"]} - VNC Viewer")
             self.grabbing = False
-            self.viewer.restricting = False
         else:
+            self.viewer.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
             self.viewer.setFocus()
             self.viewer.grabMouse()
             self.viewer.grabKeyboard()
-            self.setCursor(Qt.CursorShape.BlankCursor)
-            self.start_pos = QCursor.pos()
+            self.viewer.set_input_grabbed(True)
             self.setWindowTitle(f"{self.config["name"]} - VNC Viewer - Press Ctrl+Alt+G to release grab")
-            self.viewer.setMouseTracking(True)
-            self.viewer.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
             self.grabbing = True
-            self.viewer.restricting = True
 
     def _handle_pause(self):
         self.paused = not self.paused

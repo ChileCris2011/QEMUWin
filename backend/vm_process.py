@@ -96,6 +96,7 @@ class VMProcess:
             self._set_state(VMState.RUNNING)
 
             self.qmp.add_event_listener(self._handle_qmp_event)
+            self._prefer_absolute_mouse()
 
             self.metadata.save(
                 {
@@ -342,15 +343,10 @@ class VMProcess:
         #        f"driver=dsound,model={audio}"
         #    ]
 
-        # Modern replacement for the removed/deprecated -usbdevice tablet.
-
-        #cmd += ["-usbdevice", "tablet"]
-
         cmd += [
+            "-usb",
             "-device",
-            "qemu-xhci,id=usbtablet",
-            "-device",
-            "usb-tablet,bus=usbtablet.0"
+            "usb-tablet"
         ]
 
 
@@ -480,6 +476,7 @@ class VMProcess:
                 active_state = "paused"
 
             self.qmp.add_event_listener(self._handle_qmp_event)
+            self._prefer_absolute_mouse()
 
             return {
                 "name": data["name"],
@@ -496,6 +493,43 @@ class VMProcess:
         self._set_state(VMState.STOPPED)
 
         return None
+
+    def _prefer_absolute_mouse(self):
+        if not self.qmp:
+            return
+
+        try:
+            response = self.qmp.query_mice()
+            mice = response.get("return", [])
+            logging.info("QEMU mouse devices: %s", mice)
+
+            absolute_mouse = next(
+                (mouse for mouse in mice if mouse.get("absolute")),
+                None
+            )
+
+            if not absolute_mouse:
+                logging.warning(
+                    "QEMU did not report an absolute mouse device. "
+                    "The guest will use relative PS/2 mouse input."
+                )
+                return
+
+            if absolute_mouse.get("current"):
+                logging.info(
+                    "QEMU is already using absolute mouse input: %s",
+                    absolute_mouse.get("name")
+                )
+                return
+
+            self.qmp.set_mouse(absolute_mouse["index"])
+            logging.info(
+                "Selected absolute QEMU mouse input: %s",
+                absolute_mouse.get("name")
+            )
+
+        except Exception:
+            logging.exception("Failed to query or select QEMU mouse device")
 
     def _monitor(self):
         if not self.process:

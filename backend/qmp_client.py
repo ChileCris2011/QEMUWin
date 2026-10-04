@@ -153,6 +153,14 @@ class QMPClient:
     def resume(self):
         return self.execute("cont")
 
+    def query_mice(self):
+        return self.execute("query-mice")
+
+    def set_mouse(self, index):
+        return self.execute("human-monitor-command", {
+            "command-line": f"mouse_set {index}"
+        })
+
     def change_medium(self, device, path):
         empty_text = ["Empty", "", " ", "empty", None]
 
