@@ -166,7 +166,7 @@ class VMManager:
 
             if mode == "create":
                 self._create_disk_file(disk)
-                disk["path"] = os.path.join(disk["path"], f"{disk["name"]}.{disk["fmat"]}")
+                disk["path"] = os.path.normpath(os.path.join(disk["path"], f"{disk["name"]}.{disk["fmat"]}"))
                 disk.pop("size", None)
                 disk.pop("fmat", None)
                 disk.pop("name")
