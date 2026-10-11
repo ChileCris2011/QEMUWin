@@ -52,8 +52,8 @@ Source: "dist\QEMUWin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 
 [Registry]
 ;Registry data from file QEMUWin.reg
-Root: HKCU; Subkey: "Software\QEMUWin\QEMUWin"; Flags: uninsdeletekey
-Root: HKCU; Subkey: "Software\QEMUWin\QEMUWin"; ValueType: dword; ValueName: "QEMUWin"; ValueData: $00000000; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\QEMUWin"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\QEMUWin\QEMUWin"; ValueType: dword; ValueName: "QEMUWin"; ValueData: $00000000; Flags: uninsdeletevalue createvalueifdoesntexist
 ;End of registry data from file QEMUWin.reg
 
 [Icons]
