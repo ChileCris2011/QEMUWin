@@ -12,8 +12,8 @@ sys.path.insert(0, str(ROOT))
 from app_version import resolve_version
 
 
-def generate(root=ROOT, release_tag=None):
-    version = resolve_version(root, release_tag=release_tag, development=release_tag is None)
+def generate(root=ROOT, release_tag=None, development=None):
+    version = resolve_version(root, release_tag=release_tag, development=release_tag is None or development)
     output = root / "build" / "version"
     output.mkdir(parents=True, exist_ok=True)
     (output / "build_version.json").write_text(
@@ -28,9 +28,10 @@ def generate(root=ROOT, release_tag=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--release-tag")
+    parser.add_argument("--development", action="store_true")
     args = parser.parse_args()
     try:
-        version = generate(release_tag=args.release_tag)
+        version = generate(release_tag=args.release_tag,development=args.development)
     except (ValueError, OSError, subprocess.SubprocessError) as error:
         parser.exit(1, f"Version generation failed: {error}\n")
     print(version)

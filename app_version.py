@@ -35,6 +35,9 @@ def resolve_version(root=ROOT, release_tag=None, development=False):
     """Explicit release tags must identify HEAD; ordinary source runs detect tags."""
     if release_tag is not None:
         version = version_from_tag(release_tag)
+        if development:
+            distance = _git(root, "rev-list", "--count", "HEAD")
+            return f"{version}.dev.{distance}"
         if _git(root, "rev-parse", f"refs/tags/{release_tag}^{{commit}}") != _git(root, "rev-parse", "HEAD"):
             raise ValueError("Release tag does not identify the checked-out commit")
         if _git(root, "status", "--porcelain"):
