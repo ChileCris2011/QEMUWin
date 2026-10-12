@@ -43,9 +43,11 @@ class LogPage(QWidget):
         loglevel_text = QLabel("The logging file registers messages by level. By default, the INFO level is selected to show general messages. If you need to troubleshoot some error, or need to file a bug, DEBUG level may be necessary.", wordWrap=True)
 
         loglevel_lay = QHBoxLayout()
+        self.logLevels = [50, 40, 30, 20, 10]
         self.loglevel_select = QComboBox()
         self.loglevel_select.addItems(["Critical", "Error", "Warning", "Info", "Debug"])
-        self.logLevels = [50, 40, 30, 20, 10]
+        self.loglevel_select.setCurrentIndex(self.logLevels.index(settings.value("LogLevel", 20)))
+        
 
         loglevel_lay.addWidget(QLabel("Logging level: "))
         loglevel_lay.addWidget(self.loglevel_select)

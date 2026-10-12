@@ -9,6 +9,8 @@ from gui.theme_manager import ThemeManager
 
 import backend.error_handling as error_handler
 
+import tools.message_level
+
 settings = QSettings("QEMUWin", "QEMUWin")
 
 open("./latest.log", "w", encoding="utf-8")
@@ -24,9 +26,9 @@ if __name__ == "__main__":
     threading.excepthook = error_handler.thread_exception_hook
     sys.excepthook = error_handler.global_exception_hook
 
-    logging.info("-"*(len(APP_VERSION) + 25))
-    logging.info(f"------- QEMUWin v{APP_VERSION} -------")
-    logging.info("-"*(len(APP_VERSION) + 25))
+    logging.msg("-"*(len(APP_VERSION) + 25))
+    logging.msg(f"------- QEMUWin v{APP_VERSION} -------")
+    logging.msg("-"*(len(APP_VERSION) + 25))
 
     app = QApplication(sys.argv)
     
