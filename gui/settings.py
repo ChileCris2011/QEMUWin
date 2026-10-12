@@ -97,3 +97,4 @@ class SettingsDialog(QDialog):
                 elif "log_level" in data:
                     logger = logging.getLogger()
                     logger.setLevel(data["log_level"])
+                    settings.setValue("LogLevel", data["log_level"])
