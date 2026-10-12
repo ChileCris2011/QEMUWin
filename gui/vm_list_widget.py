@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QListWidget, QListWidgetItem, QMenu, QMessageBox
+from PyQt6.QtWidgets import QListWidget, QListWidgetItem, QMenu, QMessageBox, QWidget
 from gui.vm_item_widget import VMItemWidget, DummyItem
 
 class VMListWidget(QListWidget):
@@ -15,14 +15,14 @@ class VMListWidget(QListWidget):
     def refresh(self):
         self.clear()
 
-        if self.manager.list_vms():
+        if len(self.manager.list_vms()) > 0:
             for vm_name in self.manager.list_vms():
                 config = self.manager.config.load_vm(vm_name)
 
                 item = QListWidgetItem()
                 widget = VMItemWidget(
                     vm_name,
-                    state="stopped",
+                    state=self.manager.get_state(vm_name).value,
                     memory=config.get("memory", "Unknown")
                 )
 
@@ -33,6 +33,8 @@ class VMListWidget(QListWidget):
         else:
             dummy_item = QListWidgetItem()
             dummy_widget = DummyItem("vmEmpty", "No Machines added. Start creating a machine!")
+            dummy_item.setSizeHint(dummy_widget.sizeHint())
+            dummy_item.setFlags(dummy_item.flags() & ~Qt.ItemFlag.ItemIsSelectable & ~Qt.ItemFlag.ItemIsEnabled)
             self.addItem(dummy_item)
             self.setItemWidget(dummy_item, dummy_widget)
     
@@ -41,7 +43,7 @@ class VMListWidget(QListWidget):
         item = self.currentItem()
         if item:
             widget = self.itemWidget(item)
-            return widget.name_label.text()
+            return None if isinstance(widget, DummyItem) else widget.name_label.text()
         return None
     
     def update_vm_state(self, name, state):
@@ -64,6 +66,8 @@ class VMListWidget(QListWidget):
 
         start_action = menu.addAction(f"  Start")
         stop_action = menu.addAction(f"  Stop")
+        pause_action = menu.addAction(f"  Pause")
+        resume_action = menu.addAction(f"  Resume")
         kill_action = menu.addAction(f"  Quit")
         edit_action = menu.addAction(f"  Edit")
         delete_action = menu.addAction(f"  Delete")
@@ -76,6 +80,13 @@ class VMListWidget(QListWidget):
         else:
             stop_action.setDisabled(True)
             start_action.setDisabled(False)
+        
+        if state.value == "paused":
+            pause_action.setDisabled(True)
+            resume_action.setDisabled(False)
+        else:
+            resume_action.setDisabled(True)
+            pause_action.setDisabled(True)
 
         action = menu.exec(self.mapToGlobal(position))
 
@@ -84,6 +95,12 @@ class VMListWidget(QListWidget):
 
         elif action == stop_action:
             self.manager.stop_vm(name)
+
+        elif action == pause_action:
+            self.manager.pause_vm(name)
+        
+        elif action == resume_action:
+            self.manager.resume_vm(name)
         
         elif action == kill_action:
             self.manager.kill_vm(name)

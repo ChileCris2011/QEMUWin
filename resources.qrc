@@ -8,6 +8,12 @@
     <file>resources/icons/dark/play_arrow.svg</file>
     <file>resources/icons/dark/settings.svg</file>
     <file>resources/icons/dark/stop.svg</file>
+    <file>resources/icons/dark/pause.svg</file>
+    <file>resources/icons/dark/size.svg</file>
+    <file>resources/icons/dark/disk.svg</file>
+    <file>resources/icons/dark/floppy.svg</file>
+    <file>resources/icons/dark/on_off.svg</file>
+    <file>resources/icons/dark/insert.svg</file>
     <file>resources/icons/light/close.svg</file>
     <file>resources/icons/light/delete.svg</file>
     <file>resources/icons/light/edit.svg</file>
@@ -15,5 +21,11 @@
     <file>resources/icons/light/play_arrow.svg</file>
     <file>resources/icons/light/settings.svg</file>
     <file>resources/icons/light/stop.svg</file>
+    <file>resources/icons/light/pause.svg</file>
+    <file>resources/icons/light/size.svg</file>
+    <file>resources/icons/light/disk.svg</file>
+    <file>resources/icons/light/floppy.svg</file>
+    <file>resources/icons/light/on_off.svg</file>
+    <file>resources/icons/light/insert.svg</file>
   </qresource>
 </RCC>

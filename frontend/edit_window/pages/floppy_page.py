@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import (
     QWidget, QFormLayout,
     QLineEdit, QPushButton,
-    QComboBox, QFileDialog, QHBoxLayout
+    QComboBox, QFileDialog,
+    QHBoxLayout, QSpinBox
 )
 
 
@@ -26,6 +27,12 @@ class FloppyPage(QWidget):
 
         layout.addRow("Media Path:", path_layout)
 
+        self.id = QSpinBox()
+        self.id.setRange(0, 1)
+        self.id.setValue(config.get("id"))
+
+        layout.addRow("Id.", self.id)
+
         self.setLayout(layout)
 
     def select_image(self):
@@ -38,5 +45,7 @@ class FloppyPage(QWidget):
 
     def get_data(self):
         return {
-            "path": self.path.text()
+            "floppy": "floppy",
+            "path": self.path.text(),
+            "id": self.id.value()
         }

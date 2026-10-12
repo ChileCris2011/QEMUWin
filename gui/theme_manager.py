@@ -98,6 +98,9 @@ class ThemeManager(QObject):
         dark_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, QColor(210, 210, 210))
         dark_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, QColor(190, 190, 190))
 
+        dark_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, QColor(222, 222, 222))
+        dark_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, QColor(188, 188, 188))
+
         dark_palette.setColor(QPalette.ColorRole.Highlight, QColor(0, 120, 215, 127))
         dark_palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
 
@@ -124,6 +127,9 @@ class ThemeManager(QObject):
 
         light_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, QColor(100, 100, 100))
         light_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, QColor(190, 190, 190))
+
+        light_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, QColor(100, 100, 100))
+        light_palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, QColor(190, 190, 190))
 
         light_palette.setColor(QPalette.ColorRole.Light, QColor(42, 42, 42))
         light_palette.setColor(QPalette.ColorRole.Midlight, QColor(42, 42, 42))
@@ -175,7 +181,7 @@ class IconManager:
 
     def get_icon(self, name: str, size: int = 40) -> QIcon:
         """
-        Obtiene un QIcon recoloreado dinámicamente.
+        Obtiene un QIcon dependiendo del tema actual.
         """
         theme = self.theme_manager.get_mode()
 
@@ -184,7 +190,7 @@ class IconManager:
         if key in self._cache:
             return self._cache[key]
 
-        icon = self._load_svg_icon(name, size, theme)
+        icon = QIcon(f":{self.icon_path}/{theme}/{name}.svg")
         self._cache[key] = icon
         return icon
 
@@ -192,16 +198,5 @@ class IconManager:
     # Internals
     # -------------------------
 
-    def _icon_color(self):
-        mode = self.theme_manager.get_mode()
-        if mode == "dark":
-            return QColor(230, 230, 230)  # casi blanco
-        return QColor(40, 40, 40)  # casi negro
-
-    def _load_svg_icon(self, name: str, size: int, theme: str) -> QIcon:
-        return QIcon(f":resources/icons/{theme}/{name}.svg")
-    
-    # Didn't want to change all. That'll be for v2
-    
     def _manage_change(self):
         self.set_mode(self.theme_manager.get_mode())

@@ -3,7 +3,10 @@
 ; Non-commercial use only
 
 #define MyAppName "QEMUWin"
-#define MyAppVersion "1.0.0"
+#ifnexist "build\version\version.iss"
+  #error "Missing version metadata. Run python tools/generate_version.py before compiling."
+#endif
+#include "build\version\version.iss"
 #define MyAppPublisher "ThevianDex, MekaGPT"
 #define MyAppURL "https://github.com/ChileCris2011/QEMUWin"
 #define MyAppExeName "QEMUWin.exe"
@@ -49,8 +52,8 @@ Source: "dist\QEMUWin\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 
 [Registry]
 ;Registry data from file QEMUWin.reg
-Root: HKCU; Subkey: "Software\QEMUWin\QEMUWin"; Flags: uninsdeletekey
-Root: HKCU; Subkey: "Software\QEMUWin\QEMUWin"; ValueType: dword; ValueName: "QEMUWin"; ValueData: $00000000; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\QEMUWin"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\QEMUWin\QEMUWin"; ValueType: dword; ValueName: "QEMUWin"; ValueData: $00000000; Flags: uninsdeletevalue createvalueifdoesntexist
 ;End of registry data from file QEMUWin.reg
 
 [Icons]

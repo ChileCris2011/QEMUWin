@@ -3,18 +3,19 @@ from PyQt6.QtWidgets import (
     QTextEdit, QPushButton, QHBoxLayout
 )
 from PyQt6.QtCore import QSize
+from PyQt6.QtGui import QFont, QGuiApplication
 
 class ErrorDialog(QDialog):
-    def __init__(self, message, details, parent=None):
-        super().__init__(parent)
+    def __init__(self, message, details):
+        super().__init__()
         self.setWindowTitle("An error has ocurred")
-        self.resize(200, 150)
+        self.resize(200, 130)
 
         layout = QVBoxLayout(self)
 
         message_layout = QHBoxLayout()
 
-        message_layout.addSpacing(24)
+        message_layout.addStretch()
 
         error_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxCritical)
 
@@ -22,11 +23,12 @@ class ErrorDialog(QDialog):
         error_label.setPixmap(error_icon.pixmap(QSize(32, 32)))
 
         message_layout.addWidget(error_label)
+        message_layout.addSpacing(8)
 
-        label = QLabel(f"<b>Error:</b> {message}")
+        label = QLabel(f"<b>Error: </b> {message}")
         message_layout.addWidget(label)
 
-        message_layout.addSpacing(24)
+        message_layout.addStretch()
 
         layout.addLayout(message_layout)
 
@@ -36,6 +38,8 @@ class ErrorDialog(QDialog):
         self.details = QTextEdit()
         self.details.setReadOnly(True)
         self.details.setPlainText(details)
+        self.details.setFont(QFont("Consolas"))
+        self.details.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
         self.details.hide()
         layout.addWidget(self.details)
 
@@ -57,12 +61,23 @@ class ErrorDialog(QDialog):
 
         layout.addLayout(button_layout)
 
+    def center_dialog(self): # yeah, it pisses me when it de-centers
+        screen = self.screen() or QGuiApplication.primaryScreen()
+        screen_geometry = screen.availableGeometry()
+
+        dialog_geometry = self.frameGeometry()
+        dialog_geometry.moveCenter(screen_geometry.center())
+
+        self.move(dialog_geometry.topLeft())
+
     def toggle_details(self):
         if self.details.isVisible():
-            self.resize(200, 150)
+            self.resize(200, 130)
             self.details.hide()
+            self.center_dialog()
             self.toggle_button.setText("Show Details")
         else:
-            self.resize(200, 300)
+            self.resize(500, 300)
             self.details.show()
+            self.center_dialog()
             self.toggle_button.setText("Hide Details")

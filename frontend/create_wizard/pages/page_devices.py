@@ -1,28 +1,45 @@
 from PyQt6.QtWidgets import (
-    QWizardPage, QFormLayout,
-    QComboBox
+    QWizardPage, QComboBox,
+    QFormLayout, QLabel,
+    QHBoxLayout, QSpinBox,
+    QCheckBox
 )
+
+from PyQt6.QtCore import Qt
 
 class PageDevices(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setTitle("Additional Devices")
 
-        layout = QFormLayout()
+        self.clayout = QFormLayout()
 
-        self.audio = QComboBox()
-        self.audio.addItems(["None", "ac97", "intel-hda", "ich9-intel-hda", "hda-duplex", "sb16", "es1370", "usb-audio", "virtio-sound"])
+        vlabel = QLabel("Video")
+        vlabel.setStyleSheet("font-weight: bold; font-size: 10pt;")
+        self.clayout.addRow(vlabel)
 
         self.video = QComboBox()
-        self.video.addItems(["virtio", "qxl", "std", "vmware", "vga", "cirrus"])
+        self.video.addItems(["virtio", "qxl", "std", "vmware", "cirrus"])
+        self.video.setCurrentIndex(2) # std as default
+        self.clayout.addRow("    Model:", self.video)
 
-        layout.addRow("Audio:", self.audio)
-        layout.addRow("Video:", self.video)
+        self.connconfig = QHBoxLayout()
 
-        self.setLayout(layout)
+        alabel = QLabel("Audio")
+        alabel.setStyleSheet("font-weight: bold; font-size: 10pt;")
+        self.clayout.addRow(alabel)
+
+        self.audio = QComboBox()
+        self.audio.addItems(["None", "ac97", "adlib", "cs4231a", "es1370", "gus", "hda", "sb16", "virtio"])
+        self.clayout.addRow("    Model", self.audio)
+
+        self.setLayout(self.clayout)
 
     def get_data(self):
         return {
             "audio": self.audio.currentText(),
-            "video": self.video.currentText()
+            "video": {
+                "model": self.video.currentText(),
+                "connection": "QEMU"
+            }
         }

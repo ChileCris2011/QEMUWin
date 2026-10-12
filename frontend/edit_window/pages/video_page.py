@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QWidget, QFormLayout, QComboBox
-
+from PyQt6.QtWidgets import QWidget, QFormLayout, QComboBox, QSpinBox, QHBoxLayout, QLabel, QCheckBox
+from PyQt6.QtCore import Qt
 
 class VideoPage(QWidget):
     def __init__(self, config):
@@ -8,8 +8,8 @@ class VideoPage(QWidget):
         layout = QFormLayout()
 
         self.model = QComboBox()
-        self.model.addItems(["virtio", "qxl", "std", "vmware", "vga", "cirrus"])
-        self.model.setCurrentText(config.get("model"))
+        self.model.addItems(["virtio", "qxl", "std", "vmware", "cirrus"])
+        self.model.setCurrentText(config.get("model", "std"))
 
         layout.addRow("Video Model:", self.model)
 
@@ -17,5 +17,8 @@ class VideoPage(QWidget):
 
     def get_data(self):
         return {
-            "video": self.model.currentText()
+            "video": {
+                "model": self.model.currentText(),
+                "connection": "QEMU"
+            }
         }

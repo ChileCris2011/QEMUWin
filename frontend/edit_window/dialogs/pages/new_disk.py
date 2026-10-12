@@ -2,12 +2,15 @@ from PyQt6.QtWidgets import (
     QWidget, QFormLayout,
     QLineEdit, QPushButton,
     QComboBox, QFileDialog,
-    QHBoxLayout, QMessageBox
+    QHBoxLayout, QMessageBox,
+    QApplication
 )
 
 class NewDiskPage(QWidget):
-    def __init__(self):
+    def __init__(self, app=QApplication):
         super().__init__()
+
+        self.app = app
 
         layout = QFormLayout()
 
@@ -17,7 +20,7 @@ class NewDiskPage(QWidget):
         browse.clicked.connect(self.select_file)
 
         new_disk = QPushButton("New Disk...")
-        browse.clicked.connect(self.new_disk)
+        new_disk.clicked.connect(self.new_disk)
 
         path_layout = QHBoxLayout()
         path_layout.addWidget(self.path)
@@ -42,7 +45,7 @@ class NewDiskPage(QWidget):
         from frontend.create_wizard.dialogs.create_disk_dialog import CreateDiskDialog
         from backend.vm_manager import VMManager
 
-        manager = VMManager()
+        manager = VMManager(self.app)
 
         create_wizard = CreateDiskDialog(self)
         if create_wizard.exec():

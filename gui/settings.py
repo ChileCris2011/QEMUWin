@@ -62,7 +62,7 @@ class SettingsDialog(QDialog):
 
         self.add_page("QEMU", QEMUPathPage())
         self.add_page("Theme", ThemePage())
-        self.add_page("About", AboutPage())
+        self.add_page("About", AboutPage(theme_manager.get_mode()))
 
     def add_page(self, name, widget):
         item = QListWidgetItem(name)

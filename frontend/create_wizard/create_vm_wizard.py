@@ -1,6 +1,6 @@
 
 # Pages
-from PyQt6.QtWidgets import QWizard
+from PyQt6.QtWidgets import QWizard, QApplication
 from frontend.create_wizard.pages.page_name import PageName
 from frontend.create_wizard.pages.page_install import PageInstall
 from frontend.create_wizard.pages.page_cpu_memory import PageCpuMemory
@@ -15,15 +15,17 @@ from gui.styles import APP_STYLE
 
 
 class CreateVMWizard(QWizard):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, app=QApplication):
         super().__init__(parent)
 
         self.setWindowTitle("Create New Virtual Machine")
         self.resize(720, 520)
         self.setWizardStyle(QWizard.WizardStyle.ClassicStyle)
 
+        self.app = app
+
         self.vm_config = {}
-        self.vm_manager = VMManager()
+        self.vm_manager = VMManager(self.app)
 
         self.addPage(PageName(self))
         self.addPage(PageCpuMemory(self))
@@ -41,7 +43,7 @@ class CreateVMWizard(QWizard):
         super().accept()
 
     def collect_config(self):
-        config = {}
+        config = {"version": 2}
         for i in range(self.pageIds().__len__()):
             page = self.page(i)
             if hasattr(page, "get_data"):

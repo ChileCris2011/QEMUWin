@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QStackedWidget,
     QPushButton, QSplitter, QListWidgetItem,
-    QMessageBox
+    QMessageBox, QApplication
 )
 from PyQt6.QtCore import Qt
 
@@ -25,7 +25,7 @@ from frontend.edit_window.dialogs.add_device_dialog import AddDeviceDialog
 import copy
 
 class EditVMWindow(QMainWindow):
-    def __init__(self, vm_config, vm_list):
+    def __init__(self, vm_config, vm_list,app =QApplication):
         super().__init__()
 
         self.setWindowTitle(f"Edit VM - {vm_config.get('name', '')}")
@@ -36,7 +36,11 @@ class EditVMWindow(QMainWindow):
 
         self.vm_list = vm_list
 
+        self.app = app
+
         self.pages = []
+
+        self.majdisk = 0
 
         central = QWidget()
         main_layout = QVBoxLayout()
@@ -45,6 +49,7 @@ class EditVMWindow(QMainWindow):
 
         # Left panel
         self.device_list = QListWidget()
+        self.device_list.setSpacing(8)
         self.device_list.currentRowChanged.connect(self.change_page)
 
         # Right panel
@@ -83,6 +88,7 @@ class EditVMWindow(QMainWindow):
 
     def build_pages(self):
 
+
         # Core
         self.add_page("Overview", OverviewPage(self.vm_config))
         self.add_page("CPU", CpuPage(self.vm_config))
@@ -90,24 +96,32 @@ class EditVMWindow(QMainWindow):
 
         # Storage
         if self.vm_config.get("storage"):
-            for i, disk in enumerate(self.vm_config.get("storage")):
-                self.add_page(f"Disk {i+1}", DiskPage(disk))
+            for disk in self.vm_config.get("storage"):
+                self.add_page(f"Disk {disk["id"]}", DiskPage(disk))
+                if int(disk["id"]) > self.majdisk:
+                    self.majdisk = int(disk["id"])
 
         # CDROM
+
+        self.cdrom_ids = []
+
         if self.vm_config.get("media"):
-            num = 0
-            for i, media in enumerate(self.vm_config.get("media")):
+            for media in self.vm_config.get("media"):
                 if media.get("type") == "CD-ROM":
-                    num += 1
-                    self.add_page(f"CD-ROM {num}", CdromPage(media))
+                    cdid = media.get("id")
+                    self.add_page(f"CD-ROM {cdid}", CdromPage(media))
+                    self.cdrom_ids.append(cdid)
         
         # Floppy
+
+        self.floppy_ids = []
+
         if self.vm_config.get("media"):
-            num = 0
-            for i, media in enumerate(self.vm_config.get("media")):
+            for media in self.vm_config.get("media"):
                 if media.get("type") == "Floppy":
-                    num += 1
-                    self.add_page(f"Floppy {num}", FloppyPage(media))
+                    fpid = media.get("id")
+                    self.add_page(f"Floppy {fpid}", FloppyPage(media))
+                    self.floppy_ids.append(fpid)
 
         # Network
         if self.vm_config.get("network"):
@@ -123,7 +137,7 @@ class EditVMWindow(QMainWindow):
         # Video
         if self.vm_config.get("video"):
             self.add_page("Video", VideoPage(
-                {"model": self.vm_config.get("video")}
+                self.vm_config.get("video")
             ))
 
         # USB
@@ -150,22 +164,48 @@ class EditVMWindow(QMainWindow):
     # --------------------------------------------------
 
     def add_device(self):
-        dialog = AddDeviceDialog()
+        dialog = AddDeviceDialog(app=self.app)
         if dialog.exec():
             device = dialog.get_data()
 
             match int(device.get("index")):
                 case 0:
-                    page = DiskPage(device.get("info"))
-                    self.add_page("New Disk", page)
+                    info = device.get("info")
+                    self.majdisk += 1
+                    info["id"] = self.majdisk
+                    page = DiskPage(info)
+                    self.add_page(f"(New) Disk {info["id"]}", page)
                 case 1:
                     info = device.get("info")
                     if info.get("type") == "CD-ROM":
+                        info["id"] = self.get_id(self.cdrom_ids)
                         page = CdromPage(info)
                         self.add_page("New CD-ROM", page)
                     else:
-                        page = FloppyPage(info)
-                        self.add_page("New Floppy", page)
+                        if len(self.floppy_ids) < 2:
+                            info["id"] = self.get_id(self.floppy_ids)
+                            page = FloppyPage(info)
+                            self.add_page("New Floppy", page)
+                        else:
+                            raise RuntimeError("You cannot add more than 2 floppys")
+    
+    def get_id(self, list):
+        if list:
+            nums = set(list)
+            i = 1
+            while True:
+                global tid
+                if i not in nums:
+                    tid = i
+                    break
+                i += 1
+
+            if tid <= max(list):
+                return tid
+            else:
+                return max(list) + 1
+        
+        return 0
 
     # --------------------------------------------------
     # Collect + Apply
@@ -216,7 +256,7 @@ class EditVMWindow(QMainWindow):
                     new_config["audio"] = data["audio"]
 
                 elif "video" in data:
-                    new_config["video"] = data["video"]
+                    new_config.update(data)
 
                 elif "usb" in data:
                     new_config["usb"] = data["usb"]
@@ -233,15 +273,16 @@ class EditVMWindow(QMainWindow):
         new_config["media"] = media
         new_config["network"] = network
         new_config["qargs"] = args
+        new_config["version"] = 2
 
-        print(f"New config: {new_config["qargs"]}\n\n")
+        print(f"New config: {new_config}\n\n")
 
         return new_config
 
     def apply_changes(self):
         from backend.vm_manager import VMManager
 
-        manager = VMManager()
+        manager = VMManager(self.app)
 
         self.vm_config = self.collect_all_data()
 

@@ -6,6 +6,8 @@ from PyQt6.QtWidgets import (
     QMessageBox
 )
 
+from PyQt6.QtCore import QSettings
+
 import subprocess, logging
 
 from gui.settings_pages.dialogs.test_window import TestDialog
@@ -13,6 +15,8 @@ from gui.settings_pages.dialogs.test_window import TestDialog
 class QEMUPathPage(QWidget):
     def __init__(self):
         super().__init__()
+
+        settings = QSettings("QEMUWin", "QEMUWin")
 
         layout = QFormLayout()
 
@@ -22,6 +26,7 @@ class QEMUPathPage(QWidget):
         path_layout = QHBoxLayout()
 
         self.qemu_folder = QLineEdit()
+        self.qemu_folder.setText(settings.value("qemu/path"))
         path_layout.addWidget(self.qemu_folder)
         browse = QPushButton()
         browse.setText("Browse")
@@ -101,10 +106,12 @@ class QEMUPathPage(QWidget):
             logging.debug(command.stdout.decode())
             test_window = TestDialog(0, command.stdout)
             test_window.exec()
+            return 0
         except FileNotFoundError as e:
             test_window = TestDialog(1, e)
-            logging.error(f"qemu-system-x86_64.exe could not be found on the specified path")
+            logging.error(f"\'qemu-system-x86_64.exe\' could not be found on the specified path")
             test_window.exec()
+            return 1
 
     def _browse_folder(self):
         path= QFileDialog.getExistingDirectory(

@@ -40,7 +40,6 @@ To start your virtual machine, press "Start". For now, the program only launches
 
 You can edit a VM by pressing the "Edit" button in the interface. There, you can modify the hardware, change disks and media, add more devices, and modify QEMU flags.
 
-### QEMU Flags
 
 For more advanced use of your VM, you can use QEMU flags. These are commands that are added to the end of the VM startup command. You can find a list of these flags in the [official QEMU documentation.](https://www.qemu.org/docs/master/system/invocation.html)  
   

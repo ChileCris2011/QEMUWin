@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import (
     QWidget, QFormLayout,
     QLineEdit, QPushButton,
-    QComboBox, QFileDialog, QHBoxLayout
+    QComboBox, QFileDialog,
+    QHBoxLayout, QSpinBox
 )
 
 
@@ -31,6 +32,12 @@ class CdromPage(QWidget):
         layout.addRow("ISO Path:", path_layout)
         layout.addRow("Bus:", self.bus)
 
+        self.id = QSpinBox()
+        self.id.setRange(0, 9)
+        self.id.setValue(config.get("id"))
+
+        layout.addRow("Id.", self.id)
+
         self.setLayout(layout)
 
     def select_iso(self):
@@ -45,5 +52,6 @@ class CdromPage(QWidget):
         return {
             "cdrom": "cdrom",
             "path": self.path.text(),
-            "bus": self.bus.currentText()
+            "bus": self.bus.currentText(),
+            "id": self.id.value()
         }
