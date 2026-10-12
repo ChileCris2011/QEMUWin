@@ -12,9 +12,9 @@ This is still a work in progress. See [How to support](#how-to-support) to suppo
   
 ---
   
-## GUI v1
+## GUI v1.1.0
 
-This is finally the first version of the project. Most of the initial ideas are in this release
+Second official release for this project! Thanks for opening your issues, they are solved on this version. See CHANGELOG to review all changes!
 
 ## How to use  
 
