@@ -1,7 +1,6 @@
 name: Build Latest
 on:
   push:
-    branches: latest
     tags: "v*-*"
   pull_request:
     branches: latest
@@ -32,7 +31,11 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          python tools/generate_version.py
+          if ($env:GITHUB_EVENT_NAME -eq 'push' -and $env:GITHUB_REF_TYPE -eq 'tag') {
+            python tools/generate_version.py --release-tag "$env:GITHUB_REF_NAME" --development
+          } else {
+            python tools/generate_version.py
+          }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Install Dependencies
