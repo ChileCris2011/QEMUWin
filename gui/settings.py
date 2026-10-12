@@ -7,9 +7,12 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
+import logging
+
 from gui.settings_pages.qemu_path import QEMUPathPage
 from gui.settings_pages.theme_page import ThemePage
 from gui.settings_pages.about_page import AboutPage
+from gui.settings_pages.log_page import LogPage
 
 class SettingsDialog(QDialog):
     def __init__(self, icon_manager, theme_manager, parent=None):
@@ -61,6 +64,7 @@ class SettingsDialog(QDialog):
         self.setLayout(main_layout)
 
         self.add_page("QEMU", QEMUPathPage())
+        self.add_page("Logging", LogPage())
         self.add_page("Theme", ThemePage())
         self.add_page("About", AboutPage(theme_manager.get_mode()))
 
@@ -90,3 +94,6 @@ class SettingsDialog(QDialog):
                     settings.setValue("qemu/path", data["qemu_path"])
                 elif "theme" in data:
                     self.theme_manager.set_mode(data["theme"])
+                elif "log_level" in data:
+                    logger = logging.getLogger()
+                    logger.setLevel(data["log_level"])

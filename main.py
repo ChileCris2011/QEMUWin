@@ -13,7 +13,7 @@ open("./latest.log", "w", encoding="utf-8")
 
 logging.basicConfig(
     filename="latest.log",
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 

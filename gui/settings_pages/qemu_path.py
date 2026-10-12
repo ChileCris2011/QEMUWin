@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (
     QLabel, QLineEdit,
     QHBoxLayout, QVBoxLayout,
     QFileDialog, QPushButton,
-    QMessageBox
+    QMessageBox, QComboBox
 )
 
 from PyQt6.QtCore import QSettings
@@ -57,32 +57,9 @@ class QEMUPathPage(QWidget):
 
         browse.clicked.connect(self._browse_folder)
 
-        log_pres = QVBoxLayout()
-
-        log_title = QLabel("QEMUWin logs")
-        log_title.setStyleSheet("font-size: 12px; font-weight: bold;")
-
-        log_text = QLabel("QEMUWin keeps a log of events, errors, and debug messages. You can read it to troubleshoot problems with QEMUWin or your VM. It's also necessary if you report a problem on GitHub.", wordWrap=True)
-
-        log_buttons = QHBoxLayout()
-        log_open = QPushButton("Open latest.log")
-        folder_open = QPushButton("Open installation folder")
-
-        log_open.clicked.connect(self._open_log)
-        folder_open.clicked.connect(self._open_folder)
-
-
-        log_buttons.addWidget(log_open)
-        log_buttons.addWidget(folder_open)
-
-        log_pres.addWidget(log_title)
-        log_pres.addWidget(log_text)
-        log_pres.addLayout(log_buttons)
-
         layout.addRow(title)
         layout.addRow(path_layout)
         layout.addRow(test_layout)
-        layout.addRow(log_pres)
 
         self.setLayout(layout)
     
@@ -120,14 +97,6 @@ class QEMUPathPage(QWidget):
         )
         if path:
             self.qemu_folder.setText(path)
-
-    def _open_log(self):
-        cmd = ["powershell", "-Command", "./latest.log"]
-        subprocess.Popen(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
-    
-    def _open_folder(self):
-        cmd = ["explorer", "."]
-        subprocess.Popen(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
     
     def get_data(self):
         return {
