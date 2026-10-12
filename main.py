@@ -9,11 +9,15 @@ from gui.theme_manager import ThemeManager
 
 import backend.error_handling as error_handler
 
+import tools.message_level
+
+settings = QSettings("QEMUWin", "QEMUWin")
+
 open("./latest.log", "w", encoding="utf-8")
 
 logging.basicConfig(
     filename="latest.log",
-    level=logging.DEBUG,
+    level=settings.value("LogLevel", 20),
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
@@ -22,9 +26,9 @@ if __name__ == "__main__":
     threading.excepthook = error_handler.thread_exception_hook
     sys.excepthook = error_handler.global_exception_hook
 
-    logging.info("-"*(len(APP_VERSION) + 25))
-    logging.info("------- QEMUWin v%s -------", APP_VERSION)
-    logging.info("-"*(len(APP_VERSION) + 25))
+    logging.msg("-"*(len(APP_VERSION) + 25))
+    logging.msg(f"------- QEMUWin v{APP_VERSION} -------")
+    logging.msg("-"*(len(APP_VERSION) + 25))
 
     app = QApplication(sys.argv)
     
@@ -40,7 +44,6 @@ if __name__ == "__main__":
 
     logging.debug("Showing window")
 
-    settings = QSettings("QEMUWin", "QEMUWin")
     if settings.value("QEMUWin", 0) == 0:
         message = QMessageBox.question(
             None,
