@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWizardPage, QVBoxLayout, QLabel, QLineEdit, QComboBox, QMessageBox, QCheckBox
+from PyQt6.QtWidgets import QWizardPage, QVBoxLayout, QLabel, QLineEdit, QComboBox, QMessageBox
 
 from uuid import uuid4
 
