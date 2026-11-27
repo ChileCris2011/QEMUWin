@@ -1,5 +1,7 @@
 from PyQt6.QtWidgets import QWizardPage, QVBoxLayout, QLabel, QLineEdit, QComboBox, QMessageBox
 
+from uuid import uuid4
+
 class PageName(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -37,5 +39,6 @@ class PageName(QWizardPage):
         return {
             "name": self.name_line_edit.text(),
             "machine": self.machine_combo.currentText(),
+            "uuid": str(uuid4()),
             "firmware": self.firmware_combo.currentText()
         }

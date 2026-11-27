@@ -150,6 +150,12 @@ class VMProcess:
 
         cmd = [executable]
 
+        systemUuid = self.config.get("uuid")
+        cmd += [
+            "-uuid",
+            str(systemUuid)
+        ]
+
         machine = self.config.get("machine")
         if machine == "pc-i440fx":
             machine = "pc"
